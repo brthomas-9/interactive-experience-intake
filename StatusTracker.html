@@ -4000,8 +4000,7 @@
       .getAllSubmissions();
   }
 
-  // Global Header initialization
-  var webAppBaseUrl = '<?= ScriptApp.getService().getUrl() ?>';
+  // Global Header initialization (webAppBaseUrl already set via doGet template injection at line 1204)
 </script>
 
 <?!= include("GlobalHeader_JS") ?>

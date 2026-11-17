@@ -20,6 +20,8 @@ TESTS=(
   "tests/mobile-navigation.test.js"
   "tests/navigation-destinations.test.js"
   "tests/iframe-navigation.test.js"
+  "tests/intake-css-integration.test.js"
+  "tests/tracker-css-integration.test.js"
 )
 
 PASSED=0

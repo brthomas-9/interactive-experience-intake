@@ -178,7 +178,8 @@
       min-height: 120px;
     }
 
-    button {
+    /* Intake form buttons - exclude Global Header */
+    button:not(.navButton):not(.mobileMenuToggle) {
       margin-top: 16px;
       padding: 9px 20px;
       border: 0;
@@ -191,7 +192,7 @@
       transition: background 0.15s;
     }
 
-    button:hover:not(:disabled) {
+    button:not(.navButton):not(.mobileMenuToggle):hover:not(:disabled) {
       background: #1765cc;
     }
 
@@ -278,9 +279,9 @@
     }
 
     @media (max-width: 720px) {
-      body {
-        margin: 16px auto;
-        padding: 0 14px;
+      /* Keep body full-width for Global Header */
+      .contentWrapper {
+        padding: 16px 14px 0 14px;
       }
 
       .row {
@@ -2053,8 +2054,7 @@ async function submitForReview() {
       }
     });
 
-    // Global Header initialization
-    var webAppBaseUrl = '<?= ScriptApp.getService().getUrl() ?>';
+    // Global Header initialization (webAppBaseUrl already set via doGet template injection at line 736)
   </script>
 
   <?!= include("GlobalHeader_JS") ?>
