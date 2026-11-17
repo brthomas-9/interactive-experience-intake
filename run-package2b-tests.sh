@@ -4,6 +4,10 @@
 
 set -e
 
+# Change to repository root if script run from elsewhere
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 echo "================================"
 echo "Package 2B Phase 1 Test Suite"
 echo "================================"
@@ -15,6 +19,7 @@ TESTS=(
   "tests/tracker-header-integration.test.js"
   "tests/mobile-navigation.test.js"
   "tests/navigation-destinations.test.js"
+  "tests/iframe-navigation.test.js"
 )
 
 PASSED=0
@@ -22,9 +27,9 @@ FAILED=0
 
 for test in "${TESTS[@]}"; do
   if node "$test"; then
-    ((PASSED++))
+    PASSED=$((PASSED + 1))
   else
-    ((FAILED++))
+    FAILED=$((FAILED + 1))
   fi
   echo ""
 done

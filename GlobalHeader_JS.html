@@ -5,22 +5,22 @@
 
       function goHome(event) {
         event.preventDefault();
-        // Reload current page or return to hub
-        window.location.href = 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev';
+        // Apps Script iframe sandbox - use top-level navigation
+        window.top.location.href = 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev';
       }
 
       function globalHeaderNavigateToIntake(event) {
         event.preventDefault();
-        window.location.href = webAppBaseUrl;
+        window.top.location.href = webAppBaseUrl;
       }
 
       function globalHeaderNavigateToTracker(event) {
         event.preventDefault();
-        window.location.href = webAppBaseUrl + '?page=status';
+        window.top.location.href = webAppBaseUrl + '?page=status';
       }
 
       function globalHeaderNavigateToSavedDemos() {
-        window.location.href = 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev#saved-demos';
+        window.top.location.href = 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev#saved-demos';
       }
 
       function toggleDropdown(dropdownId) {

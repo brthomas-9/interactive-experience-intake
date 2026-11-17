@@ -142,4 +142,4 @@
   - `tests/mobile-navigation.test.js` ✅
   - `tests/navigation-destinations.test.js` ✅
 
-- **No deployment, clasp push, or merge performed** - this checklist must be completed after Team Testing deployment.
+- **No deployment, clasp push, or merge performed** - this checklist must be completed after DEV HEAD deployment.
