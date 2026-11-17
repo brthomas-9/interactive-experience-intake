@@ -5,11 +5,13 @@
 
 const assert = require('assert');
 const fs = require('fs');
+const path = require('path');
 
 console.log('Running navigation destinations test...\n');
 
-const header = fs.readFileSync('/Users/rubyyang/arcade-intake-package2b-phase1/GlobalHeader.html', 'utf8');
-const headerJS = fs.readFileSync('/Users/rubyyang/arcade-intake-package2b-phase1/GlobalHeader_JS.html', 'utf8');
+const repoRoot = path.resolve(__dirname, '..');
+const header = fs.readFileSync(path.join(repoRoot, 'GlobalHeader.html'), 'utf8');
+const headerJS = fs.readFileSync(path.join(repoRoot, 'GlobalHeader_JS.html'), 'utf8');
 
 function testResourcesDestinations() {
   console.log('Test: Resources dropdown URLs');
@@ -41,12 +43,12 @@ function testCreateSubmitDestinations() {
   // Request New Demo - should use Google Form
   assert.ok(/forms\/d\/e\/1FAIpQLSeT5z2JaseXC54hLtlhbJ4ONw6PPEXzsQwoko4ExKkCYR6fhA/.test(header), 'Request New Demo Google Form URL correct');
 
-  // Submit Demo - should use navigateToIntake function, not hardcoded URL
-  assert.ok(/navigateToIntake/.test(header), 'Submit Demo should call navigateToIntake()');
+  // Submit Demo - should use globalHeaderNavigateToIntake function, not hardcoded URL
+  assert.ok(/globalHeaderNavigateToIntake/.test(header), 'Submit Demo should call globalHeaderNavigateToIntake()');
   assert.ok(!/script\.google\.com[\s\S]{0,100}Submit a Demo/.test(header), 'Submit Demo should not hardcode script.google.com URL');
 
-  // Check My Submissions - should use navigateToTracker function
-  assert.ok(/navigateToTracker/.test(header), 'Check My Submissions should call navigateToTracker()');
+  // Check My Submissions - should use globalHeaderNavigateToTracker function
+  assert.ok(/globalHeaderNavigateToTracker/.test(header), 'Check My Submissions should call globalHeaderNavigateToTracker()');
 
   console.log('  ✓ Create & Submit URLs use correct functions\n');
 }
@@ -62,11 +64,11 @@ function testAIAssistant() {
 function testSavedDemosNavigation() {
   console.log('Test: Saved Demos navigation');
 
-  // Should use navigateToSavedDemos function
-  assert.ok(/navigateToSavedDemos/.test(header), 'Saved Demos should call navigateToSavedDemos()');
+  // Should use globalHeaderNavigateToSavedDemos function
+  assert.ok(/globalHeaderNavigateToSavedDemos/.test(header), 'Saved Demos should call globalHeaderNavigateToSavedDemos()');
 
-  // navigateToSavedDemos should point to Hub DEV with #saved-demos
-  assert.ok(/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21\/dev#saved-demos/.test(headerJS), 'navigateToSavedDemos should point to Hub DEV with #saved-demos fragment');
+  // globalHeaderNavigateToSavedDemos should point to Hub DEV with #saved-demos
+  assert.ok(/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21\/dev#saved-demos/.test(headerJS), 'globalHeaderNavigateToSavedDemos should point to Hub DEV with #saved-demos fragment');
 
   console.log('  ✓ Saved Demos navigation correct\n');
 }

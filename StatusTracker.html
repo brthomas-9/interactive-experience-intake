@@ -26,9 +26,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 1400px;
-      margin: 32px auto;
-      padding: 0 24px;
+      margin: 0;
+      padding: 0;
       color: #1f1f1f;
       background: #fff;
     }
@@ -1142,8 +1141,10 @@
 
 <?!= include("GlobalHeader") ?>
 
-<div style="max-width:1400px; margin:0 auto; padding:0 24px;">
-<div id="mainView" style="margin-top:32px;">
+<div style="max-width:1400px; margin:0 auto; padding:32px 24px 0 24px;">
+<h1 id="pageTitle" style="font-size:1.4rem; font-weight:500; margin:0 0 24px 0; color:#1f1f1f;">Interactive Experience Status Tracker</h1>
+
+<div id="mainView">
   <div class="controls-bar">
     <div class="tabs">
       <button class="tab active" data-tab="my" onclick="switchTab('my')">My Submissions</button>
@@ -3926,6 +3927,26 @@
 
   if (serverToken) {
     document.getElementById('mainView').style.display = 'none';
+
+    // Populate account header for token-only view using getUserEmail
+    google.script.run
+      .withSuccessHandler(function(emailResult) {
+        if (emailResult && emailResult.success && emailResult.email) {
+          var accountEmail = document.getElementById('accountEmail');
+          var accountInitial = document.getElementById('accountInitial');
+          if (accountEmail) accountEmail.textContent = emailResult.email;
+          if (accountInitial) accountInitial.textContent = emailResult.email.charAt(0).toUpperCase();
+        } else {
+          var accountEmail = document.getElementById('accountEmail');
+          if (accountEmail) accountEmail.textContent = 'Account';
+        }
+      })
+      .withFailureHandler(function() {
+        var accountEmail = document.getElementById('accountEmail');
+        if (accountEmail) accountEmail.textContent = 'Account';
+      })
+      .getUserEmail();
+
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.success && result.submission) {
@@ -3956,6 +3977,9 @@
             var accountInitial = document.getElementById('accountInitial');
             if (accountEmail) accountEmail.textContent = userEmail;
             if (accountInitial) accountInitial.textContent = userEmail.charAt(0).toUpperCase();
+          } else {
+            var accountEmail = document.getElementById('accountEmail');
+            if (accountEmail) accountEmail.textContent = 'Account';
           }
 
           updateReportsTabVisibility();

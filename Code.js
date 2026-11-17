@@ -29,6 +29,16 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+/**
+ * Server-side include helper for HTML template composition.
+ * Required by HtmlService for <?!= include("filename") ?> scriptlets.
+ * @param {string} filename - Name of HTML file (without extension)
+ * @return {string} Raw HTML content
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
 function getUserEmail() {
   try {
     const email = Session.getActiveUser().getEmail();

@@ -2,11 +2,18 @@
 
 **Cannot be automated - requires Apps Script deployment to verify.**
 
-## Prerequisites
+## Deployment Sequence
 
-- Deploy to Team Testing environment
+1. **DEV HEAD verification first** - Deploy this branch to Apps Script DEV, test thoroughly
+2. Team Testing remains unchanged until DEV verification passes
+3. Production remains unchanged
+
+## Prerequisites for DEV Testing
+
+- Deploy Package 2B branch to Apps Script DEV environment only
 - Test at three viewport sizes: 375px (mobile), 768px (tablet), 1440px (desktop)
 - Test both authenticated user and account email fallback scenarios
+- Do NOT deploy to Team Testing or Production yet
 
 ## Index.html (Intake Form)
 
@@ -51,7 +58,7 @@
 
 ### Form Behavior Preservation
 - [ ] Automatic creator email population still works
-- [ ] Unsaved form warns before navigation (try clicking "Create & Submit" after entering data)
+- [ ] Unsaved form warns before navigation (enter form data, then click a navigation destination like "Submit a Demo for Review" in Create & Submit dropdown)
 - [ ] Pilot warning displays if present
 - [ ] Gemini assistance unchanged
 - [ ] Form submission workflow unchanged

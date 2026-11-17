@@ -5,10 +5,12 @@
 
 const assert = require('assert');
 const fs = require('fs');
+const path = require('path');
 
 console.log('Running Intake header integration test...\n');
 
-const html = fs.readFileSync('/Users/rubyyang/arcade-intake-package2b-phase1/Index.html', 'utf8');
+const repoRoot = path.resolve(__dirname, '..');
+const html = fs.readFileSync(path.join(repoRoot, 'Index.html'), 'utf8');
 
 function testHeaderIncluded() {
   console.log('Test: Global Header included');

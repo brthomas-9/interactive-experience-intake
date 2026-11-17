@@ -5,11 +5,13 @@
 
 const assert = require('assert');
 const fs = require('fs');
+const path = require('path');
 
 console.log('Running mobile navigation test...\n');
 
-const globalHeaderCSS = fs.readFileSync('/Users/rubyyang/arcade-intake-package2b-phase1/GlobalHeader_CSS.html', 'utf8');
-const globalHeaderJS = fs.readFileSync('/Users/rubyyang/arcade-intake-package2b-phase1/GlobalHeader_JS.html', 'utf8');
+const repoRoot = path.resolve(__dirname, '..');
+const globalHeaderCSS = fs.readFileSync(path.join(repoRoot, 'GlobalHeader_CSS.html'), 'utf8');
+const globalHeaderJS = fs.readFileSync(path.join(repoRoot, 'GlobalHeader_JS.html'), 'utf8');
 
 function testMobileMenuToggle() {
   console.log('Test: Mobile menu toggle button and function');
