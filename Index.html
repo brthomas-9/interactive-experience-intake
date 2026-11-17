@@ -5,6 +5,12 @@
   <meta charset="UTF-8">
   <title>Interactive Experience Intake</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;600;700&family=Red+Hat+Text:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <?!= include("GlobalHeader_CSS") ?>
+
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -401,8 +407,10 @@
 </head>
 
 <body>
-  <img src="https://coolstuff.redhat.com/assets/stores/REDHAT/branding/site-logo.png" alt="Red Hat" style="display:block; height:28px; width:auto; margin-bottom:12px;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+  <?!= include("GlobalHeader") ?>
+
+  <div style="max-width:1120px; margin:0 auto; padding:0 24px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; margin-top:32px;">
     <div>
       <h1>Interactive Experience Intake</h1>
       <p class="subtle" style="margin-bottom:0;">Paste your Arcade demo or video URL below. AI will pre-fill most fields — you just review and submit.</p>
@@ -1842,8 +1850,17 @@ async function submitForReview() {
         if (emailField && !emailField.value) {
           emailField.value = result.email;
         }
+        // Populate Global Header account
+        const accountEmail = document.getElementById('accountEmail');
+        const accountInitial = document.getElementById('accountInitial');
+        if (accountEmail) accountEmail.textContent = result.email;
+        if (accountInitial) accountInitial.textContent = result.email.charAt(0).toUpperCase();
       }
-    }).catch(function() {});
+    }).catch(function() {
+      // Fallback for header
+      const accountEmail = document.getElementById('accountEmail');
+      if (accountEmail) accountEmail.textContent = 'Account';
+    });
 
     function promptFeedback() {
       // Capture current context
@@ -2036,6 +2053,13 @@ async function submitForReview() {
         } catch (e) {}
       }
     });
+
+    // Global Header initialization
+    var webAppBaseUrl = '<?= ScriptApp.getService().getUrl() ?>';
   </script>
+
+  <?!= include("GlobalHeader_JS") ?>
+
+  </div> <!-- Close wrapper div -->
 </body>
 </html>
