@@ -1,0 +1,92 @@
+<script>
+      // Global Header Navigation Functions
+      let currentOpenDropdown = null;
+      var webAppBaseUrl; // Set by each page
+
+      function goHome(event) {
+        event.preventDefault();
+        // Reload current page or return to hub
+        window.location.href = 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev';
+      }
+
+      function navigateToIntake(event) {
+        event.preventDefault();
+        window.location.href = webAppBaseUrl;
+      }
+
+      function navigateToTracker(event) {
+        event.preventDefault();
+        window.location.href = webAppBaseUrl + '?page=status';
+      }
+
+      function navigateToSavedDemos() {
+        window.location.href = 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev#saved-demos';
+      }
+
+      function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const button = dropdown ? dropdown.previousElementSibling : null;
+
+        // Close other dropdowns
+        if (currentOpenDropdown && currentOpenDropdown !== dropdownId) {
+          const otherDropdown = document.getElementById(currentOpenDropdown);
+          const otherButton = otherDropdown ? otherDropdown.previousElementSibling : null;
+          if (otherDropdown) {
+            otherDropdown.classList.remove('show');
+            if (otherButton) otherButton.setAttribute('aria-expanded', 'false');
+          }
+        }
+
+        // Toggle current dropdown
+        if (dropdown) {
+          const isOpen = dropdown.classList.contains('show');
+          if (isOpen) {
+            dropdown.classList.remove('show');
+            if (button) button.setAttribute('aria-expanded', 'false');
+            currentOpenDropdown = null;
+          } else {
+            dropdown.classList.add('show');
+            if (button) button.setAttribute('aria-expanded', 'true');
+            currentOpenDropdown = dropdownId;
+          }
+        }
+      }
+
+      function closeAllDropdowns() {
+        if (currentOpenDropdown) {
+          const dropdown = document.getElementById(currentOpenDropdown);
+          const button = dropdown ? dropdown.previousElementSibling : null;
+          if (dropdown) {
+            dropdown.classList.remove('show');
+            if (button) button.setAttribute('aria-expanded', 'false');
+          }
+          currentOpenDropdown = null;
+        }
+      }
+
+      // Mobile menu toggle
+      function toggleMobileMenu() {
+        const nav = document.getElementById('headerNav');
+        const toggle = document.getElementById('mobileMenuToggle');
+
+        if (nav && toggle) {
+          const isOpen = nav.classList.contains('mobileMenuOpen');
+
+          if (isOpen) {
+            nav.classList.remove('mobileMenuOpen');
+            toggle.setAttribute('aria-expanded', 'false');
+          } else {
+            nav.classList.add('mobileMenuOpen');
+            toggle.setAttribute('aria-expanded', 'true');
+          }
+        }
+      }
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function(event) {
+        const isDropdownClick = event.target.closest('.navDropdown');
+        if (!isDropdownClick) {
+          closeAllDropdowns();
+        }
+      });
+</script>
