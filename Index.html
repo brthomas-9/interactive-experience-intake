@@ -179,7 +179,7 @@
     }
 
     /* Intake form buttons - exclude Global Header */
-    button:not(.navButton):not(.mobileMenuToggle) {
+    button:not(.navButton):not(.mobileMenuToggle):not(.navDropdownButton) {
       margin-top: 16px;
       padding: 9px 20px;
       border: 0;
@@ -192,7 +192,7 @@
       transition: background 0.15s;
     }
 
-    button:not(.navButton):not(.mobileMenuToggle):hover:not(:disabled) {
+    button:not(.navButton):not(.mobileMenuToggle):not(.navDropdownButton):hover:not(:disabled) {
       background: #1765cc;
     }
 
@@ -278,8 +278,15 @@
       box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
     }
 
+    /* Content wrapper for Intake form */
+    .contentWrapper {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 24px 0 24px;
+    }
+
     @media (max-width: 720px) {
-      /* Keep body full-width for Global Header */
+      /* Adjust content padding on mobile, keep body full-width for Global Header */
       .contentWrapper {
         padding: 16px 14px 0 14px;
       }
@@ -409,7 +416,7 @@
 <body>
   <?!= include("GlobalHeader") ?>
 
-  <div style="max-width:1120px; margin:0 auto; padding:32px 24px 0 24px;">
+  <div class="contentWrapper">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
     <div>
       <h1>Interactive Experience Intake</h1>
@@ -1850,11 +1857,16 @@ async function submitForReview() {
         if (emailField && !emailField.value) {
           emailField.value = result.email;
         }
-        // Populate Global Header account
-        const accountEmail = document.getElementById('accountEmail');
-        const accountInitial = document.getElementById('accountInitial');
+      }
+      // Populate Global Header account (handle empty email)
+      const accountEmail = document.getElementById('accountEmail');
+      const accountInitial = document.getElementById('accountInitial');
+      if (result && result.email) {
         if (accountEmail) accountEmail.textContent = result.email;
         if (accountInitial) accountInitial.textContent = result.email.charAt(0).toUpperCase();
+      } else {
+        if (accountEmail) accountEmail.textContent = 'Account';
+        if (accountInitial) accountInitial.textContent = 'A';
       }
     }).catch(function() {
       // Fallback for header
