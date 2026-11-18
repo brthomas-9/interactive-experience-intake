@@ -95,6 +95,10 @@ function submitIntakeForReview(payload) {
     ? form.ctaLinks.join('\n')
     : form.ctaLink || '';
 
+  const contentPath = form.contentPath
+    || (extractedGuide && extractedGuide.contentPath)
+    || (isYouTubeUrl_(form.arcadeUrl || form.creationLink || '') ? CONTENT_PATHS.YOUTUBE : CONTENT_PATHS.ARCADE_INTERACTIVE);
+
   const submission = {
     'Timestamp': submittedAt,
     'Email Address': form.email || '',
@@ -104,6 +108,7 @@ function submitIntakeForReview(payload) {
     'Creation Link': form.creationLink || '',
     'Submitted Arcade URL': form.arcadeUrl || '',
     'Normalized Share URL': extractedGuide && extractedGuide.shareUrl || form.creationLink || '',
+    'Content Path': contentPath,
     'Content Type': stripFormulaPrefix_(contentTypeFinal),
     'What quarter was this content created in?': stripFormulaPrefix_(quarterFinal),
     'Interactive Experience Description (50-150 words)': stripFormulaPrefix_(form.descriptionWithoutGid),
@@ -131,6 +136,16 @@ function submitIntakeForReview(payload) {
     'Requirements confirmed': form.requirementsConfirmed ? 'Yes' : 'No',
     'Arcade ID': form.arcadeId || '',
     'Guide URL': extractedGuide && extractedGuide.guideUrl || form.creationLink || '',
+    'YouTube Channel': form.youtubeChannel || '',
+    'YouTube Format': form.youtubeFormat || '',
+    'YouTube Series': form.youtubeSeries || '',
+    'YouTube Channel ID': form.youtubeChannelId || '',
+    'Livestream Event': form.youtubeLivestreamEvent || '',
+    'Livestream Speakers': form.youtubeSpeakers || '',
+    'Livestream Date': form.youtubeLivestreamDate || '',
+    'Live Status': form.youtubeLiveStatus || '',
+    'YouTube Captions Note': form.youtubeCaptionsNote || '',
+    'Hosting Help Needed?': form.hostingHelpNeeded || '',
     'AI Model Used': aiMeta && aiMeta.modelUsed || '',
     'AI Prompt Version': aiMeta && aiMeta.promptVersion || '',
     'AI Generated At': aiMeta && aiMeta.generatedAt || '',
@@ -154,7 +169,7 @@ function submitIntakeForReview(payload) {
 
   const _demoUrl = submission['Submitted Arcade URL'] || submission['Creation Link'] || '';
   var saveResult = null;
-  var isYouTube = /(?:youtu\.be\/|watch\?v=|&v=)([A-Za-z0-9_\-]{11})/.test(_demoUrl);
+  var isYouTube = contentPath === CONTENT_PATHS.YOUTUBE || isYouTubeUrl_(_demoUrl);
   var ytResult = null;
   if (isYouTube) {
     ytResult = routeYouTubeSubmission_(submission);
@@ -1117,6 +1132,11 @@ function backfillGuideExtractions() {
 
 // ── YouTube routing ──────────────────────────────────────────────────────
 
+function isYouTubeUrl_(url) {
+  return /(?:youtu\.be\/|youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/)|[?&]v=)([A-Za-z0-9_\-]{11})/.test(String(url || ''))
+    || /(?:youtu\.be\/|watch\?v=|&v=|embed\/|shorts\/)([A-Za-z0-9_\-]{11})/.test(String(url || ''));
+}
+
 function routeYouTubeSubmission_(submission) {
   var ss = getTargetSpreadsheet_();
   var sheet = ss.getSheetByName(YOUTUBE_RESPONSES_SHEET);
@@ -1175,6 +1195,7 @@ function writeToYouTubeRepo_(youtubeUrl, sheet, submission) {
     'Status': 'Published',
     'Video Title': submission['Final Demo Title'] || submission['demoTitle'] || title,
     'YouTube URL': youtubeUrl,
+    'Content Path': submission['Content Path'] || CONTENT_PATHS.YOUTUBE,
     'Content Type': submission['Content Type'] || submission['contentType'] || '',
     'Origin Type': 'Intake Form',
     'Global ID': submission['Global ID'] || '',
@@ -1197,7 +1218,19 @@ function writeToYouTubeRepo_(youtubeUrl, sheet, submission) {
     'Demo Description': submission['Description (50-150 words)'] || submission['descriptionWithoutGid'] || desc.substring(0, 500),
     'Duration': duration,
     'YouTube Video ID': videoId,
-    'YouTube Channel': channel,
+    'YouTube Channel': submission['YouTube Channel'] || channel,
+    'YouTube Channel ID': submission['YouTube Channel ID'] || (snippet.channelId || ''),
+    'YouTube Format': submission['YouTube Format'] || detectYouTubeFormat_({
+      url: youtubeUrl,
+      liveBroadcastContent: snippet.liveBroadcastContent || 'none',
+      durationSeconds: ytParseDuration_(video.contentDetails.duration || '')
+    }),
+    'YouTube Series': submission['YouTube Series'] || '',
+    'Livestream Event': submission['Livestream Event'] || '',
+    'Livestream Speakers': submission['Livestream Speakers'] || '',
+    'Livestream Date': submission['Livestream Date'] || '',
+    'Live Status': submission['Live Status'] || (snippet.liveBroadcastContent || 'none'),
+    'YouTube Captions Note': submission['YouTube Captions Note'] || '',
     'Note': ''
   };
 

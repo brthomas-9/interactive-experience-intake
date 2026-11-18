@@ -59,6 +59,10 @@ function loadAppsScriptFile(filePath) {
       FIELD_TO_OPTIONS_: typeof FIELD_TO_OPTIONS_ !== 'undefined' ? FIELD_TO_OPTIONS_ : undefined,
       CTA_LINK_CATALOG: typeof CTA_LINK_CATALOG !== 'undefined' ? CTA_LINK_CATALOG : undefined,
       FOLLOW_UP_QUESTIONS: typeof FOLLOW_UP_QUESTIONS !== 'undefined' ? FOLLOW_UP_QUESTIONS : undefined,
+      CONTENT_PATHS: typeof CONTENT_PATHS !== 'undefined' ? CONTENT_PATHS : undefined,
+      CONTENT_PATH_LABELS: typeof CONTENT_PATH_LABELS !== 'undefined' ? CONTENT_PATH_LABELS : undefined,
+      detectContentPathFromUrl_: typeof detectContentPathFromUrl_ !== 'undefined' ? detectContentPathFromUrl_ : undefined,
+      detectYouTubeFormat_: typeof detectYouTubeFormat_ !== 'undefined' ? detectYouTubeFormat_ : undefined,
       cleanText: typeof cleanText !== 'undefined' ? cleanText : undefined,
       toOptionList: typeof toOptionList !== 'undefined' ? toOptionList : undefined,
       toCtaCatalogText: typeof toCtaCatalogText !== 'undefined' ? toCtaCatalogText : undefined,
@@ -67,6 +71,7 @@ function loadAppsScriptFile(filePath) {
       normalizeDraft: typeof normalizeDraft !== 'undefined' ? normalizeDraft : undefined,
       normalizeStringArray: typeof normalizeStringArray !== 'undefined' ? normalizeStringArray : undefined,
       buildGuideExtractionJson_: typeof buildGuideExtractionJson_ !== 'undefined' ? buildGuideExtractionJson_ : undefined,
+      buildManualExtractedGuide_: typeof buildManualExtractedGuide_ !== 'undefined' ? buildManualExtractedGuide_ : undefined,
     };
   `;
 

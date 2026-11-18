@@ -12,6 +12,50 @@ const ANALYTICS_SUMMARY_SHEET = 'Analytics_Summary';
 
 const YOUTUBE_RESPONSES_SHEET = 'YouTube_Responses';
 
+/** One front door → four content paths (working proposal Nov 2026). */
+const CONTENT_PATHS = {
+  ARCADE_INTERACTIVE: 'arcade_interactive',
+  ARCADE_AI_VIDEO: 'arcade_ai_video',
+  YOUTUBE: 'youtube',
+  OTHER_VIDEO: 'other_video'
+};
+
+const CONTENT_PATH_LABELS = {
+  arcade_interactive: 'Arcade Interactive',
+  arcade_ai_video: 'Arcade AI Video',
+  youtube: 'YouTube',
+  other_video: 'Other Video'
+};
+
+/**
+ * Provisional path from URL alone (before guide fetch / YouTube API).
+ * Arcade URLs start as arcade_interactive; guide failure may downgrade to arcade_ai_video.
+ */
+function detectContentPathFromUrl_(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return null;
+  if (/(?:youtu\.be\/|youtube\.com\/)/i.test(raw)) return CONTENT_PATHS.YOUTUBE;
+  if (/interact\.redhat\.com\/share\//i.test(raw) || /app\.arcade\.software\/(?:share|flows)\//i.test(raw)) {
+    return CONTENT_PATHS.ARCADE_INTERACTIVE;
+  }
+  return CONTENT_PATHS.OTHER_VIDEO;
+}
+
+/**
+ * Infer YouTube format for intake metadata.
+ * @param {{url?: string, liveBroadcastContent?: string, durationSeconds?: number}} opts
+ */
+function detectYouTubeFormat_(opts) {
+  opts = opts || {};
+  const live = String(opts.liveBroadcastContent || '').toLowerCase();
+  if (live === 'live' || live === 'upcoming') return 'Livestream';
+  const url = String(opts.url || '');
+  if (/\/shorts\//i.test(url)) return 'Short';
+  const secs = Number(opts.durationSeconds || 0);
+  if (secs > 0 && secs <= 60) return 'Short';
+  return 'Video';
+}
+
 const STATUS_TRACKER_COLUMNS = {
   FINAL_DEMO_TITLE: 'Final Demo Title',
   SUGGESTED_DEMO_TITLE: 'Suggested Demo Title',
@@ -205,6 +249,20 @@ const FIELD_OPTIONS = {
   contentTypes: [
     'Business Intro',
     'Technical Walkthrough',
+    'Other'
+  ],
+
+  youtubeFormats: [
+    'Video',
+    'Short',
+    'Livestream'
+  ],
+
+  youtubeSeries: [
+    'None / Not part of a series',
+    'VLM',
+    'Demo Deep Dive',
+    'In the Clouds',
     'Other'
   ],
 

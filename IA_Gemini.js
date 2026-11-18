@@ -79,6 +79,29 @@ function buildArcadeUrlInfo_(originalUrl, arcadeId, urlType) {
   };
 }
 
+function buildManualExtractedGuide_(url, contentPath, extras) {
+  extras = extras || {};
+  return {
+    contentPath: contentPath,
+    isYouTube: false,
+    isManual: true,
+    arcadeId: extras.arcadeId || '',
+    sourceUrl: url,
+    shareUrl: extras.shareUrl || url,
+    preferredShareUrl: extras.preferredShareUrl || extras.shareUrl || url,
+    guideUrl: extras.guideUrl || url,
+    title: extras.title || '',
+    stepTexts: [],
+    imageTexts: [],
+    imageUrls: [],
+    steps: [],
+    links: [],
+    bodyText: '',
+    warnings: extras.warnings || [],
+    urlType: extras.urlType || ''
+  };
+}
+
 function extractYouTubeContent_(url, videoId) {
   var resp = YouTube.Videos.list('snippet,contentDetails', { id: videoId });
   if (!resp.items || resp.items.length === 0) {
@@ -92,9 +115,17 @@ function extractYouTubeContent_(url, videoId) {
     ? (parseInt(durMatch[1]||0)*3600 + parseInt(durMatch[2]||0)*60 + parseInt(durMatch[3]||0))
     : 0;
   var duration = Math.floor(secs/60) + ':' + (secs%60 < 10 ? '0' : '') + secs%60;
+  var liveBroadcastContent = snippet.liveBroadcastContent || 'none';
+  var youtubeFormat = detectYouTubeFormat_({
+    url: url,
+    liveBroadcastContent: liveBroadcastContent,
+    durationSeconds: secs
+  });
   return {
     extractedGuide: {
       isYouTube: true,
+      isManual: false,
+      contentPath: CONTENT_PATHS.YOUTUBE,
       arcadeId: videoId,
       sourceUrl: url,
       shareUrl: url,
@@ -110,6 +141,9 @@ function extractYouTubeContent_(url, videoId) {
       bodyText: description,
       warnings: [],
       youtubeChannel: snippet.channelTitle || '',
+      youtubeChannelId: snippet.channelId || '',
+      youtubeFormat: youtubeFormat,
+      youtubeLiveStatus: liveBroadcastContent,
       youtubeDuration: duration,
       youtubePublishedAt: snippet.publishedAt ? snippet.publishedAt.substring(0, 10) : ''
     }
@@ -118,7 +152,10 @@ function extractYouTubeContent_(url, videoId) {
 
 function extractGuideContent(payload) {
   var inputUrl = ((typeof payload === 'object' ? payload.arcadeUrl || payload.url : payload) || '').trim();
-  var ytMatch = inputUrl.match(/(?:youtu\.be\/|watch\?v=|&v=|embed\/)([A-Za-z0-9_\-]{11})/);
+  var ytMatch = inputUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/)|[?&]v=)([A-Za-z0-9_\-]{11})/);
+  if (!ytMatch) {
+    ytMatch = inputUrl.match(/(?:youtu\.be\/|watch\?v=|&v=|embed\/|shorts\/)([A-Za-z0-9_\-]{11})/);
+  }
   if (ytMatch) return extractYouTubeContent_(inputUrl, ytMatch[1]);
 
   const arcadeUrl = typeof payload === 'string'
@@ -128,6 +165,18 @@ function extractGuideContent(payload) {
 
   if (!arcadeUrl) {
     throw new Error('Please enter an interactive demo share URL. Preferred format: ' + PREFERRED_ARCADE_SHARE_URL_EXAMPLE);
+  }
+
+  var provisionalPath = detectContentPathFromUrl_(arcadeUrl);
+  if (provisionalPath === CONTENT_PATHS.OTHER_VIDEO) {
+    return {
+      success: true,
+      extractedGuide: buildManualExtractedGuide_(arcadeUrl, CONTENT_PATHS.OTHER_VIDEO, {
+        warnings: [
+          'This URL is not an Arcade share or YouTube watch link. Continuing with Other Video manual intake.'
+        ]
+      })
+    };
   }
 
   logAnalyticsEvent_('guide_extraction_start', {
@@ -143,15 +192,48 @@ function extractGuideContent(payload) {
     extractedGuide = fetchGuideContent_(arcadeUrl);
   } catch (e) {
     const errorDurationMs = Date.now() - startTime;
-    logAnalyticsEvent_('guide_extraction_error', {
-      sessionId: sessionId,
-      arcadeId: arcadeUrl,
-      durationMs: errorDurationMs,
-      status: 'error',
-      metadata: { errorMessage: e.message, durationMs: errorDurationMs }
-    });
-    throw e;
+    // Recognized Arcade URL but no guide → Arcade AI Video manual path
+    try {
+      var parsed = normalizeArcadeUrlInput_(arcadeUrl);
+      logAnalyticsEvent_('guide_extraction_manual_fallback', {
+        sessionId: sessionId,
+        arcadeId: parsed.arcadeId || arcadeUrl,
+        durationMs: errorDurationMs,
+        status: 'manual_fallback',
+        metadata: {
+          contentPath: CONTENT_PATHS.ARCADE_AI_VIDEO,
+          errorMessage: e.message,
+          durationMs: errorDurationMs
+        }
+      });
+      return {
+        success: true,
+        extractedGuide: buildManualExtractedGuide_(arcadeUrl, CONTENT_PATHS.ARCADE_AI_VIDEO, {
+          arcadeId: parsed.arcadeId,
+          shareUrl: parsed.shareUrl,
+          preferredShareUrl: parsed.preferredShareUrl,
+          urlType: parsed.urlType,
+          warnings: [
+            'Guide extraction unavailable for this Arcade URL. Continuing with Arcade AI Video manual intake.',
+            e.message
+          ]
+        })
+      };
+    } catch (ignored) {
+      logAnalyticsEvent_('guide_extraction_error', {
+        sessionId: sessionId,
+        arcadeId: arcadeUrl,
+        durationMs: errorDurationMs,
+        status: 'error',
+        metadata: { errorMessage: e.message, durationMs: errorDurationMs }
+      });
+      throw e;
+    }
   }
+
+  extractedGuide.contentPath = CONTENT_PATHS.ARCADE_INTERACTIVE;
+  extractedGuide.isYouTube = false;
+  extractedGuide.isManual = false;
 
   const durationMs = Date.now() - startTime;
 
@@ -163,7 +245,12 @@ function extractGuideContent(payload) {
     sessionId: sessionId,
     arcadeId: extractedGuide.arcadeId || arcadeUrl,
     durationMs: durationMs,
-    metadata: { durationMs: durationMs, imageCount: imageCount, stepCount: stepCount }
+    metadata: {
+      durationMs: durationMs,
+      imageCount: imageCount,
+      stepCount: stepCount,
+      contentPath: CONTENT_PATHS.ARCADE_INTERACTIVE
+    }
   });
 
   return {
