@@ -16,7 +16,7 @@ function doGet(e) {
   // DEV URLs contain '/dev', Production uses '/exec'
   const isDev = baseUrl.indexOf('/dev') > -1;
   const hubBaseUrl = isDev
-    ? 'https://script.google.com/a/macros/redhat.com/s/AKfycbzHPaaSJ-VEVQ6IG7eE4vdLoBBo5oAOlAcIZf4f8IEh/dev'
+    ? 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev'
     : 'https://script.google.com/a/macros/redhat.com/s/AKfycbw-i5dNh9DOHOyGuo9-pbfrQCazwImd48wfxTDD8wecsg4tk5h6yXGy25OJFx1F5COgsw/exec';
 
   if (page === 'status') {

@@ -32,10 +32,10 @@ function testHubUrlDetectionLogic() {
 function testHubDevUrl() {
   console.log('Test: Hub DEV URL configuration');
 
-  // Should use current Hub DEV deployment ID (AKfycbzHPaaSJ-VEVQ6IG7eE4vdLoBBo5oAOlAcIZf4f8IEh)
-  const hubDevPattern = /AKfycbzHPaaSJ-VEVQ6IG7eE4vdLoBBo5oAOlAcIZf4f8IEh\/dev/;
+  // Should use authoritative Hub DEV deployment ID (AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21)
+  const hubDevPattern = /AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21\/dev/;
   assert.ok(hubDevPattern.test(codeJs),
-    'Should use current Hub DEV deployment ID with /dev path');
+    'Should use authoritative Hub DEV deployment ID with /dev path');
 
   console.log('  ✓ Hub DEV URL correctly configured\n');
 }
