@@ -1,6 +1,6 @@
 /**
  * Viewport Meta Tag Test
- * Verifies both pages include viewport meta tag for mobile browser rendering
+ * Verifies both doGet() paths add viewport meta tag via .addMetaTag()
  */
 
 const assert = require('assert');
@@ -10,74 +10,76 @@ const path = require('path');
 console.log('Running viewport meta tag test...\n');
 
 const repoRoot = path.resolve(__dirname, '..');
+const codeJs = fs.readFileSync(path.join(repoRoot, 'Code.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(repoRoot, 'Index.html'), 'utf8');
 const trackerHtml = fs.readFileSync(path.join(repoRoot, 'StatusTracker.html'), 'utf8');
 
-function testIndexViewportMeta() {
-  console.log('Test: Index.html has viewport meta tag');
+function testDoGetIndexViewport() {
+  console.log('Test: doGet() Index path adds viewport meta tag');
 
-  // Should have viewport meta with width=device-width, initial-scale=1
-  const viewportMetaPattern = /<meta name="viewport" content="width=device-width, initial-scale=1">/;
+  // Find the Index return statement in doGet()
+  const indexReturnPattern = /template\.evaluate\(\)[^;]*\.setTitle\('Interactive Experience Intake'\)[^;]*\.addMetaTag\('viewport',\s*'width=device-width,\s*initial-scale=1'\)/;
 
-  assert.ok(viewportMetaPattern.test(indexHtml),
-    'Index.html should have <meta name="viewport" content="width=device-width, initial-scale=1">');
+  assert.ok(indexReturnPattern.test(codeJs),
+    'doGet() Index path should call .addMetaTag(\'viewport\', \'width=device-width, initial-scale=1\')');
 
-  // Should be in <head> section
-  const headSection = indexHtml.match(/<head>([\s\S]*?)<\/head>/);
-  assert.ok(headSection && viewportMetaPattern.test(headSection[0]),
-    'Viewport meta tag should be in <head> section');
-
-  console.log('  ✓ Index.html has viewport meta tag\n');
+  console.log('  ✓ doGet() Index path adds viewport meta tag\n');
 }
 
-function testTrackerViewportMeta() {
-  console.log('Test: StatusTracker.html has viewport meta tag');
+function testDoGetTrackerViewport() {
+  console.log('Test: doGet() StatusTracker path adds viewport meta tag');
 
-  // Should have viewport meta with width=device-width, initial-scale=1
-  const viewportMetaPattern = /<meta name="viewport" content="width=device-width, initial-scale=1">/;
+  // Find the StatusTracker return statement in doGet()
+  const trackerReturnPattern = /template\.evaluate\(\)[^;]*\.setTitle\('Interactive Experience Status Tracker'\)[^;]*\.addMetaTag\('viewport',\s*'width=device-width,\s*initial-scale=1'\)/;
 
-  assert.ok(viewportMetaPattern.test(trackerHtml),
-    'StatusTracker.html should have <meta name="viewport" content="width=device-width, initial-scale=1">');
+  assert.ok(trackerReturnPattern.test(codeJs),
+    'doGet() StatusTracker path should call .addMetaTag(\'viewport\', \'width=device-width, initial-scale=1\')');
 
-  // Should be in <head> section
-  const headSection = trackerHtml.match(/<head>([\s\S]*?)<\/head>/);
-  assert.ok(headSection && viewportMetaPattern.test(headSection[0]),
-    'Viewport meta tag should be in <head> section');
-
-  console.log('  ✓ StatusTracker.html has viewport meta tag\n');
+  console.log('  ✓ doGet() StatusTracker path adds viewport meta tag\n');
 }
 
-function testViewportPlacement() {
-  console.log('Test: Viewport meta tag placement');
+function testNoInlineViewportMeta() {
+  console.log('Test: HTML files do not contain ineffective inline viewport meta tags');
 
-  // Should come after charset but before title (standard placement)
-  const indexHeadStart = indexHtml.match(/<head>([\s\S]{0,500})/);
-  const trackerHeadStart = trackerHtml.match(/<head>([\s\S]{0,500})/);
+  // Apps Script ignores inline meta tags - should not have them in HTML
+  const inlineViewportPattern = /<meta name="viewport"/;
 
-  // Check Index.html placement
-  const indexCharsetPos = indexHeadStart[0].indexOf('charset="UTF-8"');
-  const indexViewportPos = indexHeadStart[0].indexOf('name="viewport"');
-  const indexTitlePos = indexHeadStart[0].indexOf('<title>');
+  assert.ok(!inlineViewportPattern.test(indexHtml),
+    'Index.html should not have inline viewport meta tag (Apps Script ignores it)');
 
-  assert.ok(indexCharsetPos < indexViewportPos && indexViewportPos < indexTitlePos,
-    'Index.html: viewport meta should be after charset, before title');
+  assert.ok(!inlineViewportPattern.test(trackerHtml),
+    'StatusTracker.html should not have inline viewport meta tag (Apps Script ignores it)');
 
-  // Check StatusTracker.html placement
-  const trackerCharsetPos = trackerHeadStart[0].indexOf('charset="UTF-8"');
-  const trackerViewportPos = trackerHeadStart[0].indexOf('name="viewport"');
-  const trackerTitlePos = trackerHeadStart[0].indexOf('<title>');
+  console.log('  ✓ No ineffective inline viewport meta tags\n');
+}
 
-  assert.ok(trackerCharsetPos < trackerViewportPos && trackerViewportPos < trackerTitlePos,
-    'StatusTracker.html: viewport meta should be after charset, before title');
+function testDoGetStructure() {
+  console.log('Test: doGet() structure preserves routing and titles');
 
-  console.log('  ✓ Viewport meta tag correctly placed in both pages\n');
+  // Should have page=status routing
+  assert.ok(/if \(page === 'status'\)/.test(codeJs),
+    'doGet() should have page=status routing');
+
+  // Should set correct titles
+  assert.ok(/\.setTitle\('Interactive Experience Intake'\)/.test(codeJs),
+    'doGet() should set Index title');
+
+  assert.ok(/\.setTitle\('Interactive Experience Status Tracker'\)/.test(codeJs),
+    'doGet() should set Tracker title');
+
+  // Should preserve XFrameOptionsMode
+  assert.ok(/\.setXFrameOptionsMode\(HtmlService\.XFrameOptionsMode\.ALLOWALL\)/.test(codeJs),
+    'doGet() should preserve XFrameOptionsMode');
+
+  console.log('  ✓ doGet() structure preserved\n');
 }
 
 // Run all tests
 try {
-  testIndexViewportMeta();
-  testTrackerViewportMeta();
-  testViewportPlacement();
+  testDoGetIndexViewport();
+  testDoGetTrackerViewport();
+  testNoInlineViewportMeta();
+  testDoGetStructure();
 
   console.log('✅ All viewport meta tag tests passed');
 } catch (error) {

@@ -18,6 +18,7 @@ function doGet(e) {
     template.token = (e && e.parameter && e.parameter.token) || '';
     return template.evaluate()
       .setTitle('Interactive Experience Status Tracker')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
@@ -26,6 +27,7 @@ function doGet(e) {
   template.webAppBaseUrl = baseUrl;
   return template.evaluate()
     .setTitle('Interactive Experience Intake')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
