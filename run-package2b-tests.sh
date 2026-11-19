@@ -24,6 +24,7 @@ TESTS=(
   "tests/tracker-css-integration.test.js"
   "tests/viewport-meta.test.js"
   "tests/cross-app-navigation.test.js"
+  "tests/submit-new-button.test.js"
 )
 
 PASSED=0
