@@ -22,6 +22,7 @@ TESTS=(
   "tests/iframe-navigation.test.js"
   "tests/intake-css-integration.test.js"
   "tests/tracker-css-integration.test.js"
+  "tests/viewport-meta.test.js"
 )
 
 PASSED=0
