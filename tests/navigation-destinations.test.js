@@ -68,10 +68,13 @@ function testSavedDemosNavigation() {
   // Should use globalHeaderNavigateToSavedDemos function
   assert.ok(/globalHeaderNavigateToSavedDemos/.test(header), 'Saved Demos should call globalHeaderNavigateToSavedDemos()');
 
-  // globalHeaderNavigateToSavedDemos should point to Hub DEV with #saved-demos
-  assert.ok(/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21\/dev#saved-demos/.test(headerJS), 'globalHeaderNavigateToSavedDemos should point to Hub DEV with #saved-demos fragment');
+  // globalHeaderNavigateToSavedDemos should use hubBaseUrl + #saved-demos
+  assert.ok(/hubBaseUrl \+ '#saved-demos'/.test(headerJS), 'globalHeaderNavigateToSavedDemos should use hubBaseUrl + #saved-demos');
 
-  console.log('  ✓ Saved Demos navigation correct\n');
+  // goHome should use hubBaseUrl
+  assert.ok(/function goHome[\s\S]*hubBaseUrl/.test(headerJS), 'goHome should use hubBaseUrl');
+
+  console.log('  ✓ Saved Demos and Home navigation use dynamic hubBaseUrl\n');
 }
 
 function testFeedbackIntegration() {

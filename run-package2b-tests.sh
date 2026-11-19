@@ -23,6 +23,7 @@ TESTS=(
   "tests/intake-css-integration.test.js"
   "tests/tracker-css-integration.test.js"
   "tests/viewport-meta.test.js"
+  "tests/cross-app-navigation.test.js"
 )
 
 PASSED=0

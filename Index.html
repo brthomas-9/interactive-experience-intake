@@ -739,6 +739,7 @@
     let sessionStartTime = Date.now();
     let sessionSubmissions = [];
     var webAppBaseUrl = <?!= JSON.stringify(webAppBaseUrl) ?>;
+    var hubBaseUrl = <?!= JSON.stringify(hubBaseUrl) ?>;
 
     function navigateToStatus() {
       window.top.location.href = webAppBaseUrl + '?page=status';
