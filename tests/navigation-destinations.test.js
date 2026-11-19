@@ -29,7 +29,7 @@ function testResourcesDestinations() {
   assert.ok(/redhat\.com\/en\/interactive-experiences/.test(header), 'Public Experiences URL correct');
 
   // Analytics Dashboard
-  assert.ok(/analytics\.infra\.demo\.redhat\.com\/superset\/dashboard\/101/.test(header), 'Analytics Dashboard URL correct');
+  assert.ok(/analytics\.infra\.demo\.redhat\.com\/superset\/dashboard\/144/.test(header), 'Analytics Dashboard URL correct');
 
   // Slack
   assert.ok(/redhat\.enterprise\.slack\.com\/archives\/C07HQMHFWQG/.test(header), 'Slack channel URL correct');
