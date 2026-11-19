@@ -1,0 +1,113 @@
+<!-- Global Header -->
+<header class="globalHeader">
+  <div class="headerContainer">
+    <!-- Left: Branding -->
+    <div class="headerBrand">
+      <a href="#" onclick="goHome(event)" class="brandLink" title="Return to Hub home">
+        <img src="https://coolstuff.redhat.com/assets/stores/REDHAT/branding/site-logo.png" alt="Red Hat" class="brandLogo">
+        <div class="brandText">
+          <span class="brandDivider">/</span>
+          <span class="brandTitle">The Interact Hub</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobileMenuToggle" id="mobileMenuToggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu" aria-expanded="false">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Right: Navigation -->
+    <nav class="headerNav" id="headerNav">
+      <!-- Create & Submit Dropdown -->
+      <div class="navItem navDropdown">
+        <button class="navButton" id="createDropdownBtn" aria-haspopup="true" aria-expanded="false" onclick="toggleDropdown('createDropdown')">
+          Create & Submit
+          <svg class="navChevron" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <path d="M2 3l3 3 3-3"/>
+          </svg>
+        </button>
+        <div class="navDropdownMenu" id="createDropdown" role="menu" data-section="Create & Submit">
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSeT5z2JaseXC54hLtlhbJ4ONw6PPEXzsQwoko4ExKkCYR6fhA/viewform" target="_blank" rel="noopener" class="navDropdownItem" role="menuitem">
+            Request a New Demo
+          </a>
+          <a href="#" onclick="globalHeaderNavigateToIntake(event)" class="navDropdownItem" role="menuitem">
+            Submit a Demo for Review
+          </a>
+          <a href="#" onclick="globalHeaderNavigateToTracker(event)" class="navDropdownItem" role="menuitem">
+            Check My Submissions
+          </a>
+        </div>
+      </div>
+
+      <!-- AI Assistant Link -->
+      <a href="https://notebooklm.google.com/notebook/26663614-ab4e-4ae0-ae75-1360c149438f" target="_blank" rel="noopener" class="navButton navLink">
+        AI Assistant
+      </a>
+
+      <!-- Resources Dropdown -->
+      <div class="navItem navDropdown">
+        <button class="navButton" id="resourcesDropdownBtn" aria-haspopup="true" aria-expanded="false" onclick="toggleDropdown('resourcesDropdown')">
+          Resources
+          <svg class="navChevron" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <path d="M2 3l3 3 3-3"/>
+          </svg>
+        </button>
+        <div class="navDropdownMenu" id="resourcesDropdown" role="menu" data-section="Resources">
+          <div class="navDropdownSection">
+            <div class="navDropdownSectionLabel">GUIDES & DOCUMENTATION</div>
+            <a href="https://docs.google.com/document/d/13njLj4SYUbvaUwd0zoyt1Racpz8vR4Zz8H43IqkalLU/edit?tab=t.0#heading=h.66y4kqbj468a" target="_blank" rel="noopener" class="navDropdownItem" role="menuitem">
+              Best Practices Guide
+            </a>
+            <a href="https://source.redhat.com/groups/private/arcade_demo_platform" target="_blank" rel="noopener" class="navDropdownItem" role="menuitem">
+              The Source
+            </a>
+          </div>
+          <div class="navDropdownSection">
+            <div class="navDropdownSectionLabel">EXPLORE & ANALYZE</div>
+            <a href="https://www.redhat.com/en/interactive-experiences" target="_blank" rel="noopener" class="navDropdownItem" role="menuitem">
+              Public Interactive Experiences
+            </a>
+            <a href="https://analytics.infra.demo.redhat.com/superset/dashboard/144/" target="_blank" rel="noopener" class="navDropdownItem" role="menuitem">
+              Analytics Dashboard
+            </a>
+          </div>
+          <div class="navDropdownSection">
+            <div class="navDropdownSectionLabel">HELP & FEEDBACK</div>
+            <a href="https://redhat.enterprise.slack.com/archives/C07HQMHFWQG" target="_blank" rel="noopener" class="navDropdownItem" role="menuitem">
+              Ask in Slack
+            </a>
+            <button onclick="promptFeedback(); closeAllDropdowns(); if (window.innerWidth <= 768) toggleMobileMenu();" class="navDropdownItem navDropdownButton" role="menuitem">
+              Send Feedback
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Dropdown -->
+      <div class="navItem navDropdown">
+        <button class="navButton navAccount" id="accountDropdownBtn" aria-haspopup="true" aria-expanded="false" onclick="toggleDropdown('accountDropdown')">
+          <div class="accountAvatar" id="accountAvatar">
+            <span id="accountInitial">?</span>
+          </div>
+          <span class="accountEmail" id="accountEmail">Loading...</span>
+          <svg class="navChevron" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <path d="M2 3l3 3 3-3"/>
+          </svg>
+        </button>
+        <div class="navDropdownMenu navDropdownMenuRight" id="accountDropdown" role="menu" data-section="Account">
+          <button onclick="globalHeaderNavigateToSavedDemos(); closeAllDropdowns(); if (window.innerWidth <= 768) toggleMobileMenu();" class="navDropdownItem navDropdownButton" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right:8px;">
+              <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+            </svg>
+            Saved Demos
+          </button>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>

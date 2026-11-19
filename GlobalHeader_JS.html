@@ -1,0 +1,118 @@
+<script>
+      // Global Header Navigation Functions
+      let currentOpenDropdown = null;
+      var webAppBaseUrl; // Set by each page
+      var hubBaseUrl; // Set by doGet() - DEV or Production
+
+      function goHome(event) {
+        event.preventDefault();
+        // Apps Script iframe sandbox - use top-level navigation
+        window.top.location.href = hubBaseUrl;
+      }
+
+      function globalHeaderNavigateToIntake(event) {
+        event.preventDefault();
+        window.top.location.href = webAppBaseUrl;
+      }
+
+      function globalHeaderNavigateToTracker(event) {
+        event.preventDefault();
+        window.top.location.href = webAppBaseUrl + '?page=status';
+      }
+
+      function globalHeaderNavigateToSavedDemos() {
+        window.top.location.href = hubBaseUrl + '#saved-demos';
+      }
+
+      function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const button = dropdown ? dropdown.previousElementSibling : null;
+
+        // Close other dropdowns
+        if (currentOpenDropdown && currentOpenDropdown !== dropdownId) {
+          const otherDropdown = document.getElementById(currentOpenDropdown);
+          const otherButton = otherDropdown ? otherDropdown.previousElementSibling : null;
+          if (otherDropdown) {
+            otherDropdown.classList.remove('show');
+            if (otherButton) otherButton.setAttribute('aria-expanded', 'false');
+          }
+        }
+
+        // Toggle current dropdown
+        if (dropdown) {
+          const isOpen = dropdown.classList.contains('show');
+          if (isOpen) {
+            dropdown.classList.remove('show');
+            if (button) button.setAttribute('aria-expanded', 'false');
+            currentOpenDropdown = null;
+          } else {
+            dropdown.classList.add('show');
+            if (button) button.setAttribute('aria-expanded', 'true');
+            currentOpenDropdown = dropdownId;
+          }
+        }
+      }
+
+      function closeAllDropdowns() {
+        if (currentOpenDropdown) {
+          const dropdown = document.getElementById(currentOpenDropdown);
+          const button = dropdown ? dropdown.previousElementSibling : null;
+          if (dropdown) {
+            dropdown.classList.remove('show');
+            if (button) button.setAttribute('aria-expanded', 'false');
+          }
+          currentOpenDropdown = null;
+        }
+      }
+
+      // Mobile menu toggle
+      function toggleMobileMenu() {
+        const nav = document.getElementById('headerNav');
+        const toggle = document.getElementById('mobileMenuToggle');
+
+        if (nav && toggle) {
+          const isOpen = nav.classList.contains('mobileMenuOpen');
+
+          if (isOpen) {
+            nav.classList.remove('mobileMenuOpen');
+            toggle.setAttribute('aria-expanded', 'false');
+          } else {
+            nav.classList.add('mobileMenuOpen');
+            toggle.setAttribute('aria-expanded', 'true');
+          }
+        }
+      }
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function(event) {
+        const isDropdownClick = event.target.closest('.navDropdown');
+        if (!isDropdownClick) {
+          closeAllDropdowns();
+        }
+      });
+
+      // Close mobile menu on outside click
+      document.addEventListener('click', function(event) {
+        const nav = document.getElementById('headerNav');
+        const toggle = document.getElementById('mobileMenuToggle');
+        const isMenuClick = event.target.closest('#headerNav') || event.target.closest('#mobileMenuToggle');
+
+        if (nav && nav.classList.contains('mobileMenuOpen') && !isMenuClick) {
+          nav.classList.remove('mobileMenuOpen');
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Close mobile menu on Escape key
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          const nav = document.getElementById('headerNav');
+          const toggle = document.getElementById('mobileMenuToggle');
+
+          if (nav && nav.classList.contains('mobileMenuOpen')) {
+            nav.classList.remove('mobileMenuOpen');
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+          }
+        }
+      });
+</script>

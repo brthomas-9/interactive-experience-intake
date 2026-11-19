@@ -4,14 +4,30 @@
   <base target="_top">
   <meta charset="UTF-8">
   <title>Interactive Experience Status Tracker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;600;700&family=Red+Hat+Text:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <?!= include("GlobalHeader_CSS") ?>
+
   <style>
     * { box-sizing: border-box; }
 
+    :root {
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --ink: #1f1f1f;
+      --muted: #5f6368;
+      --border: #dadce0;
+      --shadow: 0 8px 24px rgba(0,0,0,.06);
+      --accent: #6d28d9;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 1400px;
-      margin: 32px auto;
-      padding: 0 24px;
+      margin: 0;
+      padding: 0;
       color: #1f1f1f;
       background: #fff;
     }
@@ -1123,15 +1139,10 @@
 </head>
 <body>
 
-<img src="https://coolstuff.redhat.com/assets/stores/REDHAT/branding/site-logo.png" alt="Red Hat" style="display:block; height:28px; width:auto; margin-bottom:12px;">
-<div class="header">
-  <h1 id="pageTitle">Interactive Experience Status Tracker</h1>
-  <div style="display:flex; gap:18px; align-items:center; flex-wrap:wrap;">
-    <a href="https://github.com/rubyyyyang/interactive-experience-intake/blob/main/docs/user-guide.md" target="_blank" class="help-link">User Guide</a>
-    <a href="https://redhat.enterprise.slack.com/archives/C07HQMHFWQG" target="_blank" class="help-link">Need help?</a>
-    <a href="#" onclick="navigateToIntake(); return false;">Submit new</a>
-  </div>
-</div>
+<?!= include("GlobalHeader") ?>
+
+<div style="max-width:1400px; margin:0 auto; padding:32px 24px 0 24px;">
+<h1 id="pageTitle" style="font-size:1.4rem; font-weight:500; margin:0 0 24px 0; color:#1f1f1f;">Interactive Experience Status Tracker</h1>
 
 <div id="mainView">
   <div class="controls-bar">
@@ -1191,6 +1202,7 @@
 
 <script>
   var webAppBaseUrl = <?!= JSON.stringify(webAppBaseUrl) ?>;
+  var hubBaseUrl = <?!= JSON.stringify(hubBaseUrl) ?>;
   var serverToken = <?!= JSON.stringify(token) ?>;
 
   var allSubmissions = [];
@@ -3916,6 +3928,26 @@
 
   if (serverToken) {
     document.getElementById('mainView').style.display = 'none';
+
+    // Populate account header for token-only view using getUserEmail
+    google.script.run
+      .withSuccessHandler(function(emailResult) {
+        if (emailResult && emailResult.success && emailResult.email) {
+          var accountEmail = document.getElementById('accountEmail');
+          var accountInitial = document.getElementById('accountInitial');
+          if (accountEmail) accountEmail.textContent = emailResult.email;
+          if (accountInitial) accountInitial.textContent = emailResult.email.charAt(0).toUpperCase();
+        } else {
+          var accountEmail = document.getElementById('accountEmail');
+          if (accountEmail) accountEmail.textContent = 'Account';
+        }
+      })
+      .withFailureHandler(function() {
+        var accountEmail = document.getElementById('accountEmail');
+        if (accountEmail) accountEmail.textContent = 'Account';
+      })
+      .getUserEmail();
+
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.success && result.submission) {
@@ -3940,6 +3972,17 @@
           userEmail = result.userEmail || '';
           isAdmin = result.isAdmin || false;
 
+          // Populate Global Header account
+          if (userEmail) {
+            var accountEmail = document.getElementById('accountEmail');
+            var accountInitial = document.getElementById('accountInitial');
+            if (accountEmail) accountEmail.textContent = userEmail;
+            if (accountInitial) accountInitial.textContent = userEmail.charAt(0).toUpperCase();
+          } else {
+            var accountEmail = document.getElementById('accountEmail');
+            if (accountEmail) accountEmail.textContent = 'Account';
+          }
+
           updateReportsTabVisibility();
 
           EDITABLE_FIELDS = result.editableFields || [];
@@ -3957,6 +4000,12 @@
       })
       .getAllSubmissions();
   }
+
+  // Global Header initialization (webAppBaseUrl already set via doGet template injection at line 1204)
 </script>
+
+<?!= include("GlobalHeader_JS") ?>
+
+</div> <!-- Close wrapper div -->
 </body>
 </html>

@@ -12,21 +12,42 @@ function doGet(e) {
   const page = e && e.parameter && e.parameter.page;
   const baseUrl = ScriptApp.getService().getUrl() || '';
 
+  // Hub cross-app navigation: DEV vs Production
+  // DEV URLs contain '/dev', Production uses '/exec'
+  const isDev = baseUrl.indexOf('/dev') > -1;
+  const hubBaseUrl = isDev
+    ? 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev'
+    : 'https://script.google.com/a/macros/redhat.com/s/AKfycbw-i5dNh9DOHOyGuo9-pbfrQCazwImd48wfxTDD8wecsg4tk5h6yXGy25OJFx1F5COgsw/exec';
+
   if (page === 'status') {
     const template = HtmlService.createTemplateFromFile('StatusTracker');
     template.webAppBaseUrl = baseUrl;
+    template.hubBaseUrl = hubBaseUrl;
     template.token = (e && e.parameter && e.parameter.token) || '';
     return template.evaluate()
       .setTitle('Interactive Experience Status Tracker')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
   logAnalyticsEvent_('session_start', {});
   const template = HtmlService.createTemplateFromFile('Index');
   template.webAppBaseUrl = baseUrl;
+  template.hubBaseUrl = hubBaseUrl;
   return template.evaluate()
     .setTitle('Interactive Experience Intake')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * Server-side include helper for HTML template composition.
+ * Required by HtmlService for <?!= include("filename") ?> scriptlets.
+ * @param {string} filename - Name of HTML file (without extension)
+ * @return {string} Raw HTML content
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 function getUserEmail() {
