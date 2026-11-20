@@ -185,7 +185,7 @@
       border: 0;
       border-radius: 6px;
       cursor: pointer;
-      background: #1a73e8;
+      background: #6d28d9;
       color: #fff;
       font-size: 0.88rem;
       font-weight: 500;
@@ -193,7 +193,7 @@
     }
 
     button:not(.navButton):not(.mobileMenuToggle):not(.navDropdownButton):hover:not(:disabled) {
-      background: #1765cc;
+      background: #5b21b6;
     }
 
     button.secondary {
@@ -274,8 +274,8 @@
     textarea:focus,
     select:focus {
       outline: none;
-      border-color: #1a73e8;
-      box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+      border-color: #6d28d9;
+      box-shadow: 0 0 0 2px rgba(109,40,217,0.2);
     }
 
     /* Content wrapper for Intake form */
@@ -378,12 +378,12 @@
     }
 
     .feedback-modal-buttons .submit-btn {
-      background: #1a73e8;
+      background: #6d28d9;
       color: white;
     }
 
     .feedback-modal-buttons .submit-btn:hover {
-      background: #1765cc;
+      background: #5b21b6;
     }
 
     .feedback-modal-buttons .submit-btn:disabled {
@@ -408,7 +408,7 @@
 
     /* Confidence details summary hover */
     #confidenceRow details summary:hover {
-      color: #1a73e8;
+      color: #6d28d9;
     }
   </style>
 </head>
@@ -425,10 +425,10 @@
     <div style="display:flex; gap:18px; align-items:center; flex-wrap:wrap;">
       <a href="https://github.com/rubyyyyang/interactive-experience-intake/blob/main/docs/user-guide.md" target="_blank"
          style="color: #5f6368; font-size: 0.82rem; text-decoration: none; white-space:nowrap;"
-         onmouseover="this.style.color='#1a73e8'" onmouseout="this.style.color='#5f6368'">User Guide</a>
+         onmouseover="this.style.color='#6d28d9'" onmouseout="this.style.color='#5f6368'">User Guide</a>
       <a href="#" onclick="navigateToStatus(); return false;"
-         style="color: #1a73e8; font-size: 0.85rem; text-decoration: none; padding: 6px 14px; border: 1px solid #dadce0; border-radius: 6px; transition: background 0.15s; white-space:nowrap;"
-         onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background=''">Status Tracker</a>
+         style="color: #FFFFFF; background: #6D28D9; font-size: 0.85rem; text-decoration: none; padding: 6px 14px; border: 1px solid transparent; border-radius: 6px; transition: background 0.15s; white-space:nowrap;"
+         onmouseover="this.style.background='#5B21B6'" onmouseout="this.style.background='#6D28D9'">Status Tracker</a>
     </div>
   </div>
 
@@ -589,12 +589,12 @@
     <div id="distChannelGroup" style="margin-top:8px; padding:10px 14px; border-radius:6px;">
       <div class="checkbox-row" style="margin-top:0;">
         <input id="distInteractHub" type="checkbox" onchange="toggleDistributionChannel('distInteractHub')">
-        <label for="distInteractHub"><a href="https://script.google.com/a/macros/redhat.com/s/AKfycbzc6w3O8r_rrMq9Q3WYXICfMA4DvCUQhaehUoojrTplmMhdKHdF1FBBqIyVHqzRJC-ypw/exec" target="_blank" style="color:#1a73e8;">The Interact Hub</a> (internal only)</label>
+        <label for="distInteractHub"><a href="https://script.google.com/a/macros/redhat.com/s/AKfycbzc6w3O8r_rrMq9Q3WYXICfMA4DvCUQhaehUoojrTplmMhdKHdF1FBBqIyVHqzRJC-ypw/exec" target="_blank" style="color:#6d28d9;">The Interact Hub</a> (internal only)</label>
       </div>
 
       <div class="checkbox-row">
         <input id="distPublicSite" type="checkbox" onchange="toggleDistributionChannel('distPublicSite')">
-        <label for="distPublicSite"><a href="https://www.redhat.com/en/interactive-experiences" target="_blank" style="color:#1a73e8;">interact.redhat.com</a> (public)</label>
+        <label for="distPublicSite"><a href="https://www.redhat.com/en/interactive-experiences" target="_blank" style="color:#6d28d9;">interact.redhat.com</a> (public)</label>
       </div>
 
       <div class="checkbox-row">
@@ -2030,16 +2030,16 @@ async function submitForReview() {
       const needsImprovementBtn = document.getElementById('ratingNeedsImprovement');
 
       if (rating === 'accurate') {
-        looksGoodBtn.style.background = '#e8f0fe';
-        looksGoodBtn.style.borderColor = '#1a73e8';
-        looksGoodBtn.style.color = '#1a73e8';
+        looksGoodBtn.style.background = '#ede9fe';
+        looksGoodBtn.style.borderColor = '#6d28d9';
+        looksGoodBtn.style.color = '#6d28d9';
         needsImprovementBtn.style.background = '#fff';
         needsImprovementBtn.style.borderColor = '#dadce0';
         needsImprovementBtn.style.color = '#3c4043';
       } else if (rating === 'needs_improvement') {
-        needsImprovementBtn.style.background = '#e8f0fe';
-        needsImprovementBtn.style.borderColor = '#1a73e8';
-        needsImprovementBtn.style.color = '#1a73e8';
+        needsImprovementBtn.style.background = '#ede9fe';
+        needsImprovementBtn.style.borderColor = '#6d28d9';
+        needsImprovementBtn.style.color = '#6d28d9';
         looksGoodBtn.style.background = '#fff';
         looksGoodBtn.style.borderColor = '#dadce0';
         looksGoodBtn.style.color = '#3c4043';
