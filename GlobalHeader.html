@@ -24,12 +24,12 @@
     <!-- Right: Navigation -->
     <nav class="headerNav" id="headerNav">
       <!-- Explore Demos Link -->
-      <a href="<?= hubBaseUrl ?>" class="navButton navLink">
+      <a href="<?= hubBaseUrl ?>" onclick="event.preventDefault(); window.top.location.href='<?= hubBaseUrl ?>'; return false;" class="navButton navLink">
         Explore Demos
       </a>
 
       <!-- Status Tracker Link -->
-      <a href="<?= webAppBaseUrl ?>?page=status" class="navButton navLink" <? if (currentPage === 'status') { ?>aria-current="page"<? } ?>>
+      <a href="<?= webAppBaseUrl ?>?page=status" onclick="event.preventDefault(); window.top.location.href='<?= webAppBaseUrl ?>?page=status'; return false;" class="navButton navLink" <? if (currentPage === 'status') { ?>aria-current="page"<? } ?>>
         Status Tracker
       </a>
 
