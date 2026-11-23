@@ -48,8 +48,8 @@ function testCreateSubmitDestinations() {
   assert.ok(/globalHeaderNavigateToIntake/.test(header), 'Submit Demo should call globalHeaderNavigateToIntake()');
   assert.ok(!/script.google.com[\s\S]{0,100}Submit a Demo/.test(header), 'Submit Demo should not hardcode script.google.com URL');
 
-  // Check My Submissions - should use globalHeaderNavigateToTracker function
-  assert.ok(/globalHeaderNavigateToTracker/.test(header), 'Check My Submissions should call globalHeaderNavigateToTracker()');
+  // Check My Submissions - removed from dropdown (now accessible via direct Status Tracker link)
+  assert.ok(!/globalHeaderNavigateToTracker/.test(header), 'Check My Submissions should not exist in dropdown (removed)');
 
   console.log('  ✓ Create & Submit URLs use correct functions\n');
 }
@@ -71,10 +71,10 @@ function testSavedDemosNavigation() {
   // globalHeaderNavigateToSavedDemos should use hubBaseUrl + #saved-demos
   assert.ok(/hubBaseUrl \+ '#saved-demos'/.test(headerJS), 'globalHeaderNavigateToSavedDemos should use hubBaseUrl + #saved-demos');
 
-  // goHome should use hubBaseUrl
-  assert.ok(/function goHome[\s\S]*hubBaseUrl/.test(headerJS), 'goHome should use hubBaseUrl');
+  // goHome function no longer exists (branding is static)
+  assert.ok(!/function goHome/.test(headerJS), 'goHome function should not exist (branding is static)');
 
-  console.log('  ✓ Saved Demos and Home navigation use dynamic hubBaseUrl\n');
+  console.log('  ✓ Saved Demos navigation uses dynamic hubBaseUrl\n');
 }
 
 function testFeedbackIntegration() {
