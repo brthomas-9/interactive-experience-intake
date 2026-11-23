@@ -18,11 +18,13 @@ function doGet(e) {
   const hubBaseUrl = isDev
     ? 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev'
     : 'https://script.google.com/a/macros/redhat.com/s/AKfycbw-i5dNh9DOHOyGuo9-pbfrQCazwImd48wfxTDD8wecsg4tk5h6yXGy25OJFx1F5COgsw/exec';
+  const currentPage = (page === 'status') ? 'status' : 'intake';
 
   if (page === 'status') {
     const template = HtmlService.createTemplateFromFile('StatusTracker');
     template.webAppBaseUrl = baseUrl;
     template.hubBaseUrl = hubBaseUrl;
+    template.currentPage = currentPage;
     template.token = (e && e.parameter && e.parameter.token) || '';
     return template.evaluate()
       .setTitle('Interactive Experience Status Tracker')
@@ -34,6 +36,7 @@ function doGet(e) {
   const template = HtmlService.createTemplateFromFile('Index');
   template.webAppBaseUrl = baseUrl;
   template.hubBaseUrl = hubBaseUrl;
+  template.currentPage = currentPage;
   return template.evaluate()
     .setTitle('Interactive Experience Intake')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
