@@ -28,32 +28,382 @@ const CONTENT_PATH_LABELS = {
 };
 
 /**
+ * Manual / unsupported submissions → owned Video Demo Google Form
+ * (edit: https://docs.google.com/forms/d/17wFoX95UE7FIHABB85D16nQXe_tp71gPlXolicRsbRc/edit)
+ */
+const VIDEO_DEMO_GOOGLE_FORM_URL =
+  'https://docs.google.com/forms/d/e/1FAIpQLSfrA8049PJJmGbTF3Hbnj6AA9GbErP7Lb5B_xU8lyFvA_Gjvg/viewform';
+
+/**
+ * Prefill entry IDs for the owned Video Demo form (from viewform HTML).
+ * Populated after form publish; buildVideoDemoGoogleFormUrl_ falls back to bare URL if empty.
+ * Keys: videoLink, creationLink, title, creatorName (optional extras later).
+ */
+const VIDEO_DEMO_GOOGLE_FORM_ENTRIES_ = {
+  // Stand-alone path (Creation Link / Final Demo Title) — preferred for Arcade AI / Drive / MP4
+  creationLink: '',
+  titleStandAlone: '',
+  // Global-ID path Video Link / title (fallback)
+  videoLink: '',
+  titleWithGid: '',
+  // Content host type (added on owned form)
+  contentHostType: ''
+};
+
+/**
+ * Known YouTube playlist IDs → series (+ optional format bias).
+ * Used when watch URLs include &list=...
+ */
+const YOUTUBE_PLAYLIST_SERIES_ = {
+  // Red Hat vLLM Office Hours livestream recordings
+  PLbMP1JcGBmSHxp4lubU5WYmJ9YgAQcf3: {
+    series: 'vLLM Office Hours',
+    formatHint: 'Livestream'
+  },
+  'PLbMP1JcGBmSHxp4-lubU5WYmJ9YgAQcf3': {
+    series: 'vLLM Office Hours',
+    formatHint: 'Livestream'
+  },
+  // Placeholder playlist IDs — replace with real IDs when confirmed from Hub/YouTube
+  // Demo Deep Dive / VLM / In the Clouds often travel without list=; title matcher still applies.
+};
+
+/**
+ * Build Video Demo Google Form URL, optionally prefilling known fields.
+ * @param {{url?: string, title?: string, channel?: string, contentHostType?: string}} opts
+ */
+function buildVideoDemoGoogleFormUrl_(opts) {
+  opts = opts || {};
+  var base = VIDEO_DEMO_GOOGLE_FORM_URL;
+  var params = [];
+  function add(entryId, value) {
+    if (!entryId || value == null || value === '') return;
+    params.push('entry.' + entryId + '=' + encodeURIComponent(String(value)));
+  }
+  // Prefer stand-alone Creation Link + title when entry IDs are configured
+  add(VIDEO_DEMO_GOOGLE_FORM_ENTRIES_.creationLink, opts.url);
+  add(VIDEO_DEMO_GOOGLE_FORM_ENTRIES_.titleStandAlone, opts.title);
+  if (!VIDEO_DEMO_GOOGLE_FORM_ENTRIES_.creationLink) {
+    add(VIDEO_DEMO_GOOGLE_FORM_ENTRIES_.videoLink, opts.url);
+    add(VIDEO_DEMO_GOOGLE_FORM_ENTRIES_.titleWithGid, opts.title);
+  }
+  add(VIDEO_DEMO_GOOGLE_FORM_ENTRIES_.contentHostType, opts.contentHostType);
+  if (!params.length) return base;
+  var join = base.indexOf('?') >= 0 ? '&' : '?';
+  return base + join + 'usp=pp_url&' + params.join('&');
+}
+
+/**
  * Provisional path from URL alone (before guide fetch / YouTube API).
- * Arcade URLs start as arcade_interactive; guide failure may downgrade to arcade_ai_video.
+ * AI intake supports: Arcade Interactive + YouTube (Video/Livestream).
+ * Arcade AI / Other Video / Shorts → Google Form redirect.
  */
 function detectContentPathFromUrl_(url) {
   const raw = String(url || '').trim();
   if (!raw) return null;
   if (/(?:youtu\.be\/|youtube\.com\/)/i.test(raw)) return CONTENT_PATHS.YOUTUBE;
+  // Arcade AI published share: interact.redhat.com/share/videos/{id}
+  // Also editor URLs: app.arcade.software/prompt-videos/...
+  if (
+    /(?:interact\.redhat\.com|app\.arcade\.software)\/share\/videos\//i.test(raw) ||
+    /app\.arcade\.software\/prompt-videos\//i.test(raw)
+  ) {
+    return CONTENT_PATHS.ARCADE_AI_VIDEO;
+  }
   if (/interact\.redhat\.com\/share\//i.test(raw) || /app\.arcade\.software\/(?:share|flows)\//i.test(raw)) {
     return CONTENT_PATHS.ARCADE_INTERACTIVE;
   }
   return CONTENT_PATHS.OTHER_VIDEO;
 }
 
+/** Extract YouTube playlist id from watch/shorts URL when present. */
+function extractYouTubePlaylistId_(url) {
+  const m = String(url || '').match(/[?&]list=([A-Za-z0-9_\-]+)/);
+  return m ? m[1] : '';
+}
+
+/** Extract Arcade AI video id from share/videos or prompt-videos URLs. */
+function extractArcadeAiVideoId_(url) {
+  const raw = String(url || '');
+  let m = raw.match(/(?:interact\.redhat\.com|app\.arcade\.software)\/share\/videos\/([^\/?#]+)/i);
+  if (m) return decodeURIComponent(m[1]);
+  m = raw.match(/app\.arcade\.software\/prompt-videos\/(?:custom\/)?([^\/?#]+)/i);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
 /**
  * Infer YouTube format for intake metadata.
- * @param {{url?: string, liveBroadcastContent?: string, durationSeconds?: number}} opts
+ * Priority (best → fallback):
+ * 1) API liveStreamingDetails / liveBroadcastContent → Livestream
+ * 2) /shorts/ URL → Short
+ * 3) Known livestream series / title cues → Livestream
+ * 4) Duration ≤ 60s (non-live) → Short
+ * 5) Video
+ *
+ * @param {{
+ *   url?: string,
+ *   title?: string,
+ *   description?: string,
+ *   liveBroadcastContent?: string,
+ *   durationSeconds?: number,
+ *   hasLiveStreamingDetails?: boolean,
+ *   playlistId?: string,
+ *   series?: string,
+ *   formatHint?: string
+ * }} opts
  */
 function detectYouTubeFormat_(opts) {
   opts = opts || {};
   const live = String(opts.liveBroadcastContent || '').toLowerCase();
   if (live === 'live' || live === 'upcoming') return 'Livestream';
+  if (opts.hasLiveStreamingDetails) return 'Livestream';
+
   const url = String(opts.url || '');
   if (/\/shorts\//i.test(url)) return 'Short';
+
+  if (opts.formatHint === 'Livestream') return 'Livestream';
+
+  const series = String(opts.series || '');
+  if (/^vLLM Office Hours$/i.test(series)) return 'Livestream';
+
+  const text = (String(opts.title || '') + '\n' + String(opts.description || '').slice(0, 400)).toLowerCase();
+  if (
+    /\[?\s*live\s*\]?/i.test(String(opts.title || '')) ||
+    /\b(live\s*stream|livestream|office\s*hours)\b/i.test(text)
+  ) {
+    // Office Hours / explicit live wording on long-form watch URLs = Livestream recording
+    if (!/\/shorts\//i.test(url)) return 'Livestream';
+  }
+
   const secs = Number(opts.durationSeconds || 0);
   if (secs > 0 && secs <= 60) return 'Short';
   return 'Video';
+}
+
+/**
+ * Infer Red Hat show/series from title + description (+ optional playlist).
+ * Bias: default to None. Only use Other with strong episode/show evidence.
+ * Colon/pipe titles alone are NOT enough (common on standalone product videos).
+ * Returns { series, seriesOther, reason }.
+ */
+function inferYouTubeSeries_(title, description, playlistId) {
+  const rawTitle = String(title || '').trim();
+  const rawDesc = String(description || '').trim();
+  const text = (rawTitle + '\n' + rawDesc).toLowerCase();
+  const listId = String(playlistId || '').trim();
+
+  if (listId && YOUTUBE_PLAYLIST_SERIES_[listId]) {
+    return {
+      series: YOUTUBE_PLAYLIST_SERIES_[listId].series,
+      seriesOther: '',
+      reason: 'matched_playlist',
+      formatHint: YOUTUBE_PLAYLIST_SERIES_[listId].formatHint || ''
+    };
+  }
+
+  // Order matters: vLLM before VLM (distinct shows).
+  const rules = [
+    {
+      match: /\bvllm\b|\bv\s*llm\b|vllm\s+office\s+hours|office\s+hours\s*#?\s*\d+/i,
+      value: 'vLLM Office Hours',
+      formatHint: 'Livestream'
+    },
+    { match: /\bvlm\b|virtualization learning|virt(ualization)?\s+learning\s+month/i, value: 'VLM' },
+    { match: /demo\s*deep\s*dive/i, value: 'Demo Deep Dive' },
+    { match: /\bin the clouds\b/i, value: 'In the Clouds' }
+  ];
+  for (var i = 0; i < rules.length; i++) {
+    if (rules[i].match.test(text)) {
+      return {
+        series: rules[i].value,
+        seriesOther: '',
+        reason: 'matched_known_series',
+        formatHint: rules[i].formatHint || ''
+      };
+    }
+  }
+
+  // Strong signals only — prefer None when uncertain.
+  var strongEpisode = /\b(episode|ep\.?\s*#?\s*\d+|season\s*\d+|s\d+e\d+|office\s+hours\s*#?\s*\d+)\b/i.test(rawTitle)
+    || /\b(episode|ep\.?\s*#?\s*\d+|season\s*\d+|s\d+e\d+)\b/i.test(rawDesc.slice(0, 400));
+  var strongSeriesPhrase = /\b(this\s+series|part\s+of\s+(the\s+)?\w[\w\s]{0,30}\s+series|weekly\s+show|monthly\s+show)\b/i.test(text);
+  var numberedPartOfWhole = /\bpart\s*\d+\s*(of|\/)\s*\d+\b/i.test(rawTitle);
+
+  if (!(strongEpisode || strongSeriesPhrase || numberedPartOfWhole)) {
+    return {
+      series: 'None / Not part of a series',
+      seriesOther: '',
+      reason: 'standalone',
+      formatHint: ''
+    };
+  }
+
+  var guessed = '';
+  var m = rawTitle.match(/^([^:]{2,50}):\s+\S+/);
+  if (m) guessed = m[1].trim();
+  if (!guessed) {
+    m = rawTitle.match(/^.+\|\s*([^|]{2,50})$/);
+    if (m) guessed = m[1].trim();
+  }
+  if (/^(red hat|openshift|ansible|rhel|demo|video|livestream|live stream)$/i.test(guessed)) {
+    guessed = '';
+  }
+
+  return {
+    series: 'Other',
+    seriesOther: guessed,
+    reason: 'unlisted_series_signals',
+    formatHint: ''
+  };
+}
+
+/**
+ * Suggest Content Type from title/description intent, with duration as a soft tiebreaker.
+ *
+ * Business Intro ≈ overview / value / "what's new" / introducing (often ~2–5 min).
+ * Technical Walkthrough ≈ how-to / configure / deploy / hands-on demo.
+ *
+ * Duration alone is NOT enough: real Business Intros are often well over 90s.
+ */
+function inferContentType_(opts) {
+  opts = opts || {};
+  var title = String(opts.title || '');
+  var description = String(opts.description || '').slice(0, 1500);
+  var text = (title + '\n' + description).toLowerCase();
+  var secs = Number(opts.durationSeconds || 0);
+  var format = String(opts.format || '');
+
+  if (format === 'Short') return 'Business Intro';
+
+  var businessScore = 0;
+  var technicalScore = 0;
+
+  var businessPatterns = [
+    /\bintroduc(e|ing|tion)\b/i,
+    /\bwhat'?s new\b/i,
+    /\bthings to know\b/i,
+    /\boverview\b/i,
+    /\bexplainer\b/i,
+    /\bannounce(ment|s|d)?\b/i,
+    /\bbusiness value\b/i,
+    /\bwhy (choose|red hat|openshift|ansible|rhel)\b/i,
+    /\bget to know\b/i,
+    /\bmeet\b/i,
+    /\bspotlight\b/i,
+    /\belevator\b/i,
+    /\bat a glance\b/i,
+    /\bin a nutshell\b/i,
+    /\bkey (benefits|takeaways|highlights)\b/i
+  ];
+  var technicalPatterns = [
+    /\bhow to\b/i,
+    /\bstep[ -]?by[ -]?step\b/i,
+    /\bwalkthrough\b/i,
+    /\btutorial\b/i,
+    /\bhands[ -]?on\b/i,
+    /\binstall(ing|ation)?\b/i,
+    /\bconfigur(e|ing|ation)\b/i,
+    /\bdeploy(ing|ment)?\b/i,
+    /\bsetup\b/i,
+    /\btroubleshoot(ing)?\b/i,
+    /\bdeep dive\b/i,
+    /\blab\b/i,
+    /\bcli\b/i,
+    /\byaml\b/i,
+    /\bdemo:/i,
+    /\bgetting started with\b/i
+  ];
+
+  businessPatterns.forEach(function(re) {
+    if (re.test(title)) businessScore += 3;
+    else if (re.test(description)) businessScore += 1;
+  });
+  technicalPatterns.forEach(function(re) {
+    if (re.test(title)) technicalScore += 3;
+    else if (re.test(description)) technicalScore += 1;
+  });
+
+  // Soft duration bias (not a hard cutoff):
+  // Business intros from examples often land ~2–5 minutes.
+  if (secs > 0 && secs <= 300) businessScore += 1;
+  if (secs > 480) technicalScore += 2; // 8+ min leans walkthrough
+  else if (secs > 360) technicalScore += 1; // 6–8 min mild technical lean
+
+  if (businessScore === 0 && technicalScore === 0) {
+    if (secs > 0 && secs <= 300) return 'Business Intro';
+    if (secs > 300) return 'Technical Walkthrough';
+    return '';
+  }
+  if (businessScore > technicalScore) return 'Business Intro';
+  if (technicalScore > businessScore) return 'Technical Walkthrough';
+  // Tie: prefer Business Intro for shorter/mid videos, technical for longer
+  if (secs > 0 && secs <= 360) return 'Business Intro';
+  return 'Technical Walkthrough';
+}
+
+/** @deprecated Prefer inferContentType_; kept for older call sites/tests. */
+function inferContentTypeFromDuration_(durationSeconds, format) {
+  return inferContentType_({ durationSeconds: durationSeconds, format: format });
+}
+
+/** Back-compat string helper for callers/tests that expect a plain series label. */
+function inferYouTubeSeriesLabel_(title, description) {
+  var result = inferYouTubeSeries_(title, description);
+  if (result.series === 'Other' && result.seriesOther) {
+    return 'Other: ' + result.seriesOther;
+  }
+  return result.series;
+}
+
+/** Map BCP-47 / ISO language codes to intake Language options. */
+function mapYouTubeLanguageCode_(code) {
+  if (!code) return '';
+  var base = String(code).toLowerCase().split(/[-_]/)[0];
+  var map = {
+    en: 'English',
+    es: 'Spanish',
+    pt: 'Portuguese',
+    de: 'German',
+    fr: 'French',
+    ko: 'Korean',
+    zh: 'Chinese',
+    ja: 'English', // not in list; leave creator to correct via Other if needed
+    it: 'English'
+  };
+  // Prefer explicit list matches; unknown codes return empty so UI can say "review needed"
+  if (base === 'ja' || base === 'it') return '';
+  return map[base] || '';
+}
+
+/**
+ * Build a human-readable captions / languages note from YouTube API signals.
+ */
+function buildYouTubeCaptionsNote_(opts) {
+  opts = opts || {};
+  var parts = [];
+  var langs = [];
+  var seen = {};
+  function addLang(label) {
+    if (!label || seen[label]) return;
+    seen[label] = true;
+    langs.push(label);
+  }
+  addLang(mapYouTubeLanguageCode_(opts.defaultAudioLanguage));
+  addLang(mapYouTubeLanguageCode_(opts.defaultLanguage));
+  (opts.captionLanguages || []).forEach(function(code) {
+    addLang(mapYouTubeLanguageCode_(code) || String(code || '').trim());
+  });
+  if (langs.length) {
+    parts.push('Languages detected: ' + langs.join(', '));
+  }
+  if (opts.hasCaptions === true) {
+    parts.push(langs.length ? 'Captions available on YouTube' : 'Captions available (language list may be incomplete)');
+  } else if (opts.hasCaptions === false) {
+    parts.push('No captions reported by YouTube API — confirm manually');
+  } else if (!parts.length) {
+    parts.push('Caption languages not available from API — confirm manually');
+  }
+  return parts.join('. ');
 }
 
 const STATUS_TRACKER_COLUMNS = {
@@ -254,16 +604,16 @@ const FIELD_OPTIONS = {
 
   youtubeFormats: [
     'Video',
-    'Short',
     'Livestream'
   ],
 
   youtubeSeries: [
     'None / Not part of a series',
+    'vLLM Office Hours',
     'VLM',
     'Demo Deep Dive',
     'In the Clouds',
-    'Other'
+    'Other (series not in list)'
   ],
 
   creatorTeams: [
@@ -321,12 +671,13 @@ const FIELD_OPTIONS = {
     'Red Hat Enterprise Linux',
     'Red Hat OpenShift',
     'Red Hat OpenShift AI',
-'Red Hat Enterprise Linux AI',
-'Red Hat AI Inference',
+    'Red Hat Enterprise Linux AI',
+    'Red Hat AI Inference',
     'Red Hat Insights',
     'Red Hat OpenShift Virtualization',
     'Red Hat OpenStack',
     'Red Hat Satellite',
+    'Lightwell',
     'Other'
   ],
 
@@ -701,6 +1052,29 @@ const CTA_LINK_CATALOG = [
     products: ['Red Hat Insights', 'Red Hat Enterprise Linux'],
     bestFor: ['predictive analytics', 'remediation', 'operations']
   },
+
+  {
+    label: 'Lightwell',
+    url: 'https://www.redhat.com/en/lightwell',
+    category: 'product page',
+    products: ['Lightwell'],
+    bestFor: ['open source supply chain security', 'vulnerability remediation', 'third-party dependencies', 'Lightwell Network', 'Lightwell Clearinghouse']
+  },
+  {
+    label: 'Contact Red Hat sales about Lightwell',
+    url: 'https://www.redhat.com/en/contact/sales',
+    category: 'contact sales',
+    products: ['Lightwell'],
+    bestFor: ['contact sales', 'inquire about Lightwell', 'Lightwell Network engagement', 'sales callback']
+  },
+  {
+    label: 'Closing the remediation gap with Lightwell',
+    url: 'https://www.redhat.com/en/resources/closing-remediation-gap-lightwell-overview',
+    category: 'overview',
+    products: ['Lightwell'],
+    bestFor: ['Lightwell overview', 'remediation gap', 'supply chain security briefing']
+  },
+
   {
     label: 'Red Hat Customer Portal product resources',
     url: 'https://access.redhat.com/products/',

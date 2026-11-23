@@ -330,8 +330,12 @@ test('testNormalizeDraft_contracts', () => {
   // Empty draft should return all defaults
   const empty = normalizeDraft({});
   assertEquals(empty.demo_title, '', 'Empty draft should default demo_title to empty string');
-  assertEquals(empty.content_type_suggestion, '', 'content_type_suggestion should always be empty (business rule)');
+  assertEquals(empty.content_type_suggestion, '', 'empty draft content_type_suggestion defaults to empty');
   assertEquals(empty.group_suggestion, '', 'group_suggestion should always be empty (business rule)');
+
+  // YouTube path may supply a content type suggestion; preserve it when present
+  const withContentType = normalizeDraft({ content_type_suggestion: 'Business Intro' });
+  assertEquals(withContentType.content_type_suggestion, 'Business Intro', 'should preserve content_type_suggestion when provided');
   assertArrayEquals(empty.language_suggestions, [], 'Empty draft should default arrays to []');
   assertArrayEquals(empty.seo_keywords, [], 'Should default seo_keywords to []');
   assertArrayEquals(empty.other_products_suggestion, [], 'Should default other_products_suggestion to []');

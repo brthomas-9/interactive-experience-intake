@@ -145,6 +145,9 @@ function submitIntakeForReview(payload) {
     'Livestream Date': form.youtubeLivestreamDate || '',
     'Live Status': form.youtubeLiveStatus || '',
     'YouTube Captions Note': form.youtubeCaptionsNote || '',
+    'Arcade Video Tag': form.arcadeVideoTag || '',
+    'Arcade AI Captions Note': form.arcadeAiCaptionsNote || '',
+    'Arcade AI Playback Confirmed': form.arcadeAiPlaybackConfirmed ? 'Yes' : '',
     'Hosting Help Needed?': form.hostingHelpNeeded || '',
     'AI Model Used': aiMeta && aiMeta.modelUsed || '',
     'AI Prompt Version': aiMeta && aiMeta.promptVersion || '',
@@ -1154,10 +1157,33 @@ function routeYouTubeSubmission_(submission) {
   return { skipped: true, reason: 'no_youtube_url' };
 }
 
+function ensureYouTubeRepoHeaders_(sheet, requiredHeaders) {
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) {
+    return String(h || '').trim();
+  });
+  var existing = {};
+  headers.forEach(function(h) { if (h) existing[h] = true; });
+  var missing = (requiredHeaders || []).filter(function(h) { return h && !existing[h]; });
+  if (!missing.length) return headers;
+  sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+  return headers.concat(missing);
+}
+
 function writeToYouTubeRepo_(youtubeUrl, sheet, submission) {
   submission = submission || {};
+  var headers = ensureYouTubeRepoHeaders_(sheet, [
+    'CTALink',
+    'Language',
+    'SEOWords',
+    'Description for SEO',
+    'Product',
+    'YouTube Series',
+    'YouTube Format',
+    'Content Path'
+  ]);
   var lastCol = sheet.getLastColumn();
-  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h || '').trim(); });
+  headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) { return String(h || '').trim(); });
   var headerMap = {};
   headers.forEach(function(h, i) { if (h) headerMap[h] = i; });
 
@@ -1189,6 +1215,11 @@ function writeToYouTubeRepo_(youtubeUrl, sheet, submission) {
     [submission['Link 1'], submission['Link 2'], submission['Link 3']].filter(Boolean).join('\n') || '';
   var language    = submission['Language'] || submission['Language(s)'] || submission['language'] || '';
   var translation = submission['Translation Used?'] || submission['translation'] || '';
+  var seoWords = submission['Keywords for SEO'] || submission['SEOWords'] || submission['seoKeywords'] || '';
+  var seoDescription = submission['Description for SEO'] || '';
+  var otherProducts = submission['Optional: Other related products?'] || submission['Product'] || '';
+  var primaryProduct = submission['Primary product featured?'] || submission['primaryProduct'] || '';
+  var youtubeSeries = submission['YouTube Series'] || '';
 
   var values = {
     'Number': sheet.getLastRow(),
@@ -1203,7 +1234,9 @@ function writeToYouTubeRepo_(youtubeUrl, sheet, submission) {
     'Status Published Timestamp': new Date().toISOString(),
     'Status Retired Timestamp': '',
     'Creator Submitted Timestamp': submission['Creator Submission Timestamp'] || new Date().toISOString(),
-    'Primary Product': submission['Primary product featured?'] || submission['primaryProduct'] || '',
+    'Primary Product': primaryProduct,
+    // Hub Discovery also reads generic Product / SEOWords / CTALink / Language headers
+    'Product': otherProducts,
     'Destination Channels': submission['Destination Channels'] || '',
     'Marketing Program': submission['Related Marketing Program?'] || submission['marketingProgram'] || '',
     'TDP': submission['Related Technology Decision Point?'] || submission['tdp'] || '',
@@ -1211,6 +1244,10 @@ function writeToYouTubeRepo_(youtubeUrl, sheet, submission) {
     'Verticals': submission['vertical'] || submission['Vertical'] || '',
     'Event': submission['Is this for a specific event or project?'] || submission['Event'] || '',
     'Relevant Links / CTAs': ctaLinks,
+    'CTALink': ctaLinks,
+    'Language': language,
+    'SEOWords': seoWords,
+    'Description for SEO': seoDescription,
     'Quarter': submission['What quarter was this content created in?'] || submission['quarter'] || quarter,
     'Creator Name': submission['Creator Name(s)'] || submission['creatorName'] || '',
     'Creator Email': submission['Email Address'] || submission['email'] || '',
@@ -1225,12 +1262,13 @@ function writeToYouTubeRepo_(youtubeUrl, sheet, submission) {
       liveBroadcastContent: snippet.liveBroadcastContent || 'none',
       durationSeconds: ytParseDuration_(video.contentDetails.duration || '')
     }),
-    'YouTube Series': submission['YouTube Series'] || '',
+    'YouTube Series': youtubeSeries,
     'Livestream Event': submission['Livestream Event'] || '',
     'Livestream Speakers': submission['Livestream Speakers'] || '',
     'Livestream Date': submission['Livestream Date'] || '',
     'Live Status': submission['Live Status'] || (snippet.liveBroadcastContent || 'none'),
     'YouTube Captions Note': submission['YouTube Captions Note'] || '',
+    'Translation Used?': translation,
     'Note': ''
   };
 

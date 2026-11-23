@@ -61,8 +61,17 @@ function loadAppsScriptFile(filePath) {
       FOLLOW_UP_QUESTIONS: typeof FOLLOW_UP_QUESTIONS !== 'undefined' ? FOLLOW_UP_QUESTIONS : undefined,
       CONTENT_PATHS: typeof CONTENT_PATHS !== 'undefined' ? CONTENT_PATHS : undefined,
       CONTENT_PATH_LABELS: typeof CONTENT_PATH_LABELS !== 'undefined' ? CONTENT_PATH_LABELS : undefined,
+      VIDEO_DEMO_GOOGLE_FORM_URL: typeof VIDEO_DEMO_GOOGLE_FORM_URL !== 'undefined' ? VIDEO_DEMO_GOOGLE_FORM_URL : undefined,
       detectContentPathFromUrl_: typeof detectContentPathFromUrl_ !== 'undefined' ? detectContentPathFromUrl_ : undefined,
+      extractYouTubePlaylistId_: typeof extractYouTubePlaylistId_ !== 'undefined' ? extractYouTubePlaylistId_ : undefined,
+      extractArcadeAiVideoId_: typeof extractArcadeAiVideoId_ !== 'undefined' ? extractArcadeAiVideoId_ : undefined,
       detectYouTubeFormat_: typeof detectYouTubeFormat_ !== 'undefined' ? detectYouTubeFormat_ : undefined,
+      inferYouTubeSeries_: typeof inferYouTubeSeries_ !== 'undefined' ? inferYouTubeSeries_ : undefined,
+      inferYouTubeSeriesLabel_: typeof inferYouTubeSeriesLabel_ !== 'undefined' ? inferYouTubeSeriesLabel_ : undefined,
+      inferContentTypeFromDuration_: typeof inferContentTypeFromDuration_ !== 'undefined' ? inferContentTypeFromDuration_ : undefined,
+      inferContentType_: typeof inferContentType_ !== 'undefined' ? inferContentType_ : undefined,
+      mapYouTubeLanguageCode_: typeof mapYouTubeLanguageCode_ !== 'undefined' ? mapYouTubeLanguageCode_ : undefined,
+      buildYouTubeCaptionsNote_: typeof buildYouTubeCaptionsNote_ !== 'undefined' ? buildYouTubeCaptionsNote_ : undefined,
       cleanText: typeof cleanText !== 'undefined' ? cleanText : undefined,
       toOptionList: typeof toOptionList !== 'undefined' ? toOptionList : undefined,
       toCtaCatalogText: typeof toCtaCatalogText !== 'undefined' ? toCtaCatalogText : undefined,
@@ -72,6 +81,8 @@ function loadAppsScriptFile(filePath) {
       normalizeStringArray: typeof normalizeStringArray !== 'undefined' ? normalizeStringArray : undefined,
       buildGuideExtractionJson_: typeof buildGuideExtractionJson_ !== 'undefined' ? buildGuideExtractionJson_ : undefined,
       buildManualExtractedGuide_: typeof buildManualExtractedGuide_ !== 'undefined' ? buildManualExtractedGuide_ : undefined,
+      parseArcadeAiHtmlMetadata_: typeof parseArcadeAiHtmlMetadata_ !== 'undefined' ? parseArcadeAiHtmlMetadata_ : undefined,
+      extractArcadeAiContent_: typeof extractArcadeAiContent_ !== 'undefined' ? extractArcadeAiContent_ : undefined,
     };
   `;
 

@@ -79,49 +79,108 @@ function buildArcadeUrlInfo_(originalUrl, arcadeId, urlType) {
   };
 }
 
-function buildManualExtractedGuide_(url, contentPath, extras) {
-  extras = extras || {};
-  return {
-    contentPath: contentPath,
-    isYouTube: false,
-    isManual: true,
-    arcadeId: extras.arcadeId || '',
-    sourceUrl: url,
-    shareUrl: extras.shareUrl || url,
-    preferredShareUrl: extras.preferredShareUrl || extras.shareUrl || url,
-    guideUrl: extras.guideUrl || url,
-    title: extras.title || '',
-    stepTexts: [],
-    imageTexts: [],
-    imageUrls: [],
-    steps: [],
-    links: [],
-    bodyText: '',
-    warnings: extras.warnings || [],
-    urlType: extras.urlType || ''
-  };
+function listYouTubeCaptionLanguages_(videoId) {
+  try {
+    var capResp = YouTube.Captions.list('snippet', { videoId: videoId });
+    if (!capResp || !capResp.items || !capResp.items.length) return [];
+    var langs = [];
+    var seen = {};
+    capResp.items.forEach(function(item) {
+      var lang = (item.snippet && (item.snippet.language || item.snippet.name)) || '';
+      lang = String(lang || '').trim();
+      if (!lang || seen[lang]) return;
+      seen[lang] = true;
+      langs.push(lang);
+    });
+    return langs;
+  } catch (e) {
+    Logger.log('YouTube Captions.list unavailable for ' + videoId + ': ' + e.message);
+    return [];
+  }
 }
 
 function extractYouTubeContent_(url, videoId) {
-  var resp = YouTube.Videos.list('snippet,contentDetails', { id: videoId });
+  // liveStreamingDetails is required to detect *past* livestream recordings
+  // (snippet.liveBroadcastContent becomes "none" after the stream ends).
+  var resp = YouTube.Videos.list('snippet,contentDetails,liveStreamingDetails', { id: videoId });
   if (!resp.items || resp.items.length === 0) {
     throw new Error('YouTube video not found or is private.');
   }
-  var snippet = resp.items[0].snippet;
-  var details = resp.items[0].contentDetails;
+  var item = resp.items[0];
+  var snippet = item.snippet;
+  var details = item.contentDetails;
+  var liveDetails = item.liveStreamingDetails || null;
   var description = snippet.description || '';
+  var title = snippet.title || '';
   var durMatch = (details.duration || '').match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   var secs = durMatch
     ? (parseInt(durMatch[1]||0)*3600 + parseInt(durMatch[2]||0)*60 + parseInt(durMatch[3]||0))
     : 0;
   var duration = Math.floor(secs/60) + ':' + (secs%60 < 10 ? '0' : '') + secs%60;
   var liveBroadcastContent = snippet.liveBroadcastContent || 'none';
+  var hasLiveStreamingDetails = !!(
+    liveDetails &&
+    (liveDetails.actualStartTime || liveDetails.scheduledStartTime || liveDetails.actualEndTime)
+  );
+  var playlistId = extractYouTubePlaylistId_(url);
+  var seriesInfo = inferYouTubeSeries_(title, description, playlistId);
   var youtubeFormat = detectYouTubeFormat_({
     url: url,
+    title: title,
+    description: description,
     liveBroadcastContent: liveBroadcastContent,
-    durationSeconds: secs
+    durationSeconds: secs,
+    hasLiveStreamingDetails: hasLiveStreamingDetails,
+    playlistId: playlistId,
+    series: seriesInfo.series,
+    formatHint: seriesInfo.formatHint || ''
   });
+  // Shorts rarely have enough text for precise taxonomy drafts — route to Google Form.
+  if (youtubeFormat === 'Short') {
+    return googleFormRedirectResult_(
+      'YouTube Shorts are submitted with the Video Demo Google Form. ' +
+      'AI intake supports YouTube standard videos and livestreams (plus Arcade Interactive).',
+      {
+        url: url,
+        title: title,
+        channel: snippet.channelTitle || '',
+        contentHostType: 'YouTube Short'
+      }
+    );
+  }
+  var contentTypeSuggestion = inferContentType_({
+    title: title,
+    description: description,
+    durationSeconds: secs,
+    format: youtubeFormat
+  });
+  var hasCaptions = String(details.caption || '').toLowerCase() === 'true';
+  var captionLanguages = listYouTubeCaptionLanguages_(videoId);
+  // Description often lists caption languages even when Captions.list is restricted
+  var descLangHints = [];
+  var descLangMatch = description.match(/(?:captions?|subtitles?|cc)\s*(?:in|available)?\s*:?\s*([^\n.]{3,80})/i);
+  if (descLangMatch) {
+    descLangHints = descLangMatch[1].split(/,|\/|&| and /i).map(function(s) { return s.trim(); }).filter(Boolean);
+  }
+  var youtubeCaptionsNote = buildYouTubeCaptionsNote_({
+    defaultAudioLanguage: snippet.defaultAudioLanguage || '',
+    defaultLanguage: snippet.defaultLanguage || '',
+    hasCaptions: hasCaptions,
+    captionLanguages: captionLanguages.concat(descLangHints)
+  });
+  if (!youtubeCaptionsNote) {
+    youtubeCaptionsNote = 'Could not auto-detect caption languages — confirm manually.';
+  }
+  var audioLangLabel = mapYouTubeLanguageCode_(snippet.defaultAudioLanguage || snippet.defaultLanguage || '');
+  var warnings = [];
+  if (youtubeFormat === 'Livestream' && liveBroadcastContent === 'none' && hasLiveStreamingDetails) {
+    warnings.push('Detected as a livestream recording via YouTube liveStreamingDetails (stream has ended).');
+  }
+  if (seriesInfo.reason === 'matched_playlist') {
+    warnings.push('Series inferred from YouTube playlist on the URL.');
+  }
   return {
+    success: true,
     extractedGuide: {
       isYouTube: true,
       isManual: false,
@@ -130,7 +189,7 @@ function extractYouTubeContent_(url, videoId) {
       sourceUrl: url,
       shareUrl: url,
       guideUrl: url,
-      title: snippet.title || '',
+      title: title,
       stepTexts: description
         ? description.substring(0, 1500).split('\n').filter(function(l) { return l.trim(); })
         : [],
@@ -139,24 +198,71 @@ function extractYouTubeContent_(url, videoId) {
       steps: [],
       links: [],
       bodyText: description,
-      warnings: [],
+      warnings: warnings,
       youtubeChannel: snippet.channelTitle || '',
       youtubeChannelId: snippet.channelId || '',
       youtubeFormat: youtubeFormat,
       youtubeLiveStatus: liveBroadcastContent,
       youtubeDuration: duration,
-      youtubePublishedAt: snippet.publishedAt ? snippet.publishedAt.substring(0, 10) : ''
+      youtubePublishedAt: snippet.publishedAt ? snippet.publishedAt.substring(0, 10) : '',
+      youtubeSeries: seriesInfo.series,
+      youtubeSeriesOther: seriesInfo.seriesOther || '',
+      youtubeSeriesReason: seriesInfo.reason || '',
+      youtubePlaylistId: playlistId || '',
+      youtubeCaptionsNote: youtubeCaptionsNote,
+      youtubeHasCaptions: hasCaptions,
+      youtubeLanguageSuggestion: audioLangLabel,
+      youtubeDefaultAudioLanguage: snippet.defaultAudioLanguage || '',
+      youtubeDefaultLanguage: snippet.defaultLanguage || '',
+      youtubeDurationSeconds: secs,
+      contentTypeSuggestion: contentTypeSuggestion
     }
   };
 }
 
+function googleFormRedirectResult_(message, prefill) {
+  prefill = prefill || {};
+  var formUrl = typeof buildVideoDemoGoogleFormUrl_ === 'function'
+    ? buildVideoDemoGoogleFormUrl_(prefill)
+    : VIDEO_DEMO_GOOGLE_FORM_URL;
+  return {
+    success: false,
+    redirectToGoogleForm: true,
+    googleFormUrl: formUrl,
+    prefill: prefill,
+    message: message ||
+      'This URL should be submitted with the Video Demo Google Form so all metadata can be captured.'
+  };
+}
+
 function extractGuideContent(payload) {
+  try {
+    return extractGuideContent_(payload);
+  } catch (e) {
+    Logger.log('extractGuideContent routed to Google Form: ' + (e && e.message));
+    return googleFormRedirectResult_(
+      'This URL could not be processed in the AI intake form. ' +
+      'Please continue in the Video Demo Google Form — Arcade Interactive share links and YouTube standard video / livestream URLs are supported here when publicly readable.'
+    );
+  }
+}
+
+function extractGuideContent_(payload) {
   var inputUrl = ((typeof payload === 'object' ? payload.arcadeUrl || payload.url : payload) || '').trim();
   var ytMatch = inputUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/)|[?&]v=)([A-Za-z0-9_\-]{11})/);
   if (!ytMatch) {
     ytMatch = inputUrl.match(/(?:youtu\.be\/|watch\?v=|&v=|embed\/|shorts\/)([A-Za-z0-9_\-]{11})/);
   }
-  if (ytMatch) return extractYouTubeContent_(inputUrl, ytMatch[1]);
+  if (ytMatch) {
+    try {
+      return extractYouTubeContent_(inputUrl, ytMatch[1]);
+    } catch (ytErr) {
+      return googleFormRedirectResult_(
+        'This YouTube URL could not be loaded in AI intake (private, deleted, or unavailable). ' +
+        'Please submit it with the Video Demo Google Form instead.'
+      );
+    }
+  }
 
   const arcadeUrl = typeof payload === 'string'
     ? payload
@@ -164,19 +270,32 @@ function extractGuideContent(payload) {
   const sessionId = (typeof payload === 'object' && payload) ? payload.sessionId : '';
 
   if (!arcadeUrl) {
-    throw new Error('Please enter an interactive demo share URL. Preferred format: ' + PREFERRED_ARCADE_SHARE_URL_EXAMPLE);
+    return googleFormRedirectResult_(
+      'Please paste an Arcade Interactive share URL or a YouTube URL. ' +
+      'For other content, use the Video Demo Google Form.'
+    );
   }
 
   var provisionalPath = detectContentPathFromUrl_(arcadeUrl);
-  if (provisionalPath === CONTENT_PATHS.OTHER_VIDEO) {
-    return {
-      success: true,
-      extractedGuide: buildManualExtractedGuide_(arcadeUrl, CONTENT_PATHS.OTHER_VIDEO, {
-        warnings: [
-          'This URL is not an Arcade share or YouTube watch link. Continuing with Other Video manual intake.'
-        ]
-      })
-    };
+  // Arcade AI videos + Drive/RH TV/MP4/unknown → Google Form
+  if (
+    provisionalPath === CONTENT_PATHS.ARCADE_AI_VIDEO ||
+    provisionalPath === CONTENT_PATHS.OTHER_VIDEO
+  ) {
+    var isArcadeAiRedirect = provisionalPath === CONTENT_PATHS.ARCADE_AI_VIDEO;
+    return googleFormRedirectResult_(
+      isArcadeAiRedirect
+        ? 'Arcade AI videos are submitted with the Video Demo Google Form so all metadata (including TDP, Sales Tactic, and Marketing Program) can be captured.'
+        : 'This URL is outside AI intake (Arcade Interactive or YouTube). Continue in the Video Demo Google Form.',
+      {
+        url: arcadeUrl,
+        contentHostType: isArcadeAiRedirect
+          ? 'Arcade AI video'
+          : (/drive\.google\.com/i.test(arcadeUrl)
+            ? 'Google Drive video'
+            : (/\.mp4(\?|$)/i.test(arcadeUrl) ? 'MP4 / local video file' : 'Other / not sure'))
+      }
+    );
   }
 
   logAnalyticsEvent_('guide_extraction_start', {
@@ -192,43 +311,17 @@ function extractGuideContent(payload) {
     extractedGuide = fetchGuideContent_(arcadeUrl);
   } catch (e) {
     const errorDurationMs = Date.now() - startTime;
-    // Recognized Arcade URL but no guide → Arcade AI Video manual path
-    try {
-      var parsed = normalizeArcadeUrlInput_(arcadeUrl);
-      logAnalyticsEvent_('guide_extraction_manual_fallback', {
-        sessionId: sessionId,
-        arcadeId: parsed.arcadeId || arcadeUrl,
-        durationMs: errorDurationMs,
-        status: 'manual_fallback',
-        metadata: {
-          contentPath: CONTENT_PATHS.ARCADE_AI_VIDEO,
-          errorMessage: e.message,
-          durationMs: errorDurationMs
-        }
-      });
-      return {
-        success: true,
-        extractedGuide: buildManualExtractedGuide_(arcadeUrl, CONTENT_PATHS.ARCADE_AI_VIDEO, {
-          arcadeId: parsed.arcadeId,
-          shareUrl: parsed.shareUrl,
-          preferredShareUrl: parsed.preferredShareUrl,
-          urlType: parsed.urlType,
-          warnings: [
-            'Guide extraction unavailable for this Arcade URL. Continuing with Arcade AI Video manual intake.',
-            e.message
-          ]
-        })
-      };
-    } catch (ignored) {
-      logAnalyticsEvent_('guide_extraction_error', {
-        sessionId: sessionId,
-        arcadeId: arcadeUrl,
-        durationMs: errorDurationMs,
-        status: 'error',
-        metadata: { errorMessage: e.message, durationMs: errorDurationMs }
-      });
-      throw e;
-    }
+    logAnalyticsEvent_('guide_extraction_error', {
+      sessionId: sessionId,
+      arcadeId: arcadeUrl,
+      durationMs: errorDurationMs,
+      status: 'routed_google_form',
+      metadata: { errorMessage: e.message, durationMs: errorDurationMs }
+    });
+    return googleFormRedirectResult_(
+      'No interactive Arcade guide was found for this URL. ' +
+      'If this is an Arcade AI video or another non-guide asset, continue in the Video Demo Google Form.'
+    );
   }
 
   extractedGuide.contentPath = CONTENT_PATHS.ARCADE_INTERACTIVE;
@@ -847,19 +940,22 @@ function decodeHtml_(value) {
 
 function buildMetadataPrompt(extractedGuide) {
   const isYouTube = extractedGuide.isYouTube === true;
+  const isVideoPath = isYouTube;
   const contentTypePhrase = isYouTube ? 'YouTube video' : 'interactive demo';
 
   Logger.log('buildMetadataPrompt - isYouTube: ' + isYouTube);
   Logger.log('buildMetadataPrompt - extractedGuide.isYouTube: ' + extractedGuide.isYouTube);
+
+  const analysisInstructions = isYouTube
+    ? 'This is a YouTube video. Base your analysis on the video title and description provided below.'
+    : 'The guide\'s step-by-step screenshots are attached in sequence. Treat them as if you are watching the full demo video from start to finish. Each image is labeled with its step number and text description. Go through every step in order and build a complete mental picture of:\n- What product or solution is being demonstrated\n- What the user does at each stage (install, configure, connect, create, deploy, etc.)\n- What UI screens, dialogs, and navigation elements appear\n- What the end result or outcome of the demo is';
 
   return `
 You are helping prepare an intake submission for a Red Hat ${contentTypePhrase}.
 
 Use only the guide content provided below. Do not invent product features, metrics, customer names, claims, or unsupported benefits.
 
-${isYouTube
-  ? 'This is a YouTube video. Base your analysis on the video title and description provided below.'
-  : 'The guide\'s step-by-step screenshots are attached in sequence. Treat them as if you are watching the full demo video from start to finish. Each image is labeled with its step number and text description. Go through every step in order and build a complete mental picture of:\n- What product or solution is being demonstrated\n- What the user does at each stage (install, configure, connect, create, deploy, etc.)\n- What UI screens, dialogs, and navigation elements appear\n- What the end result or outcome of the demo is'}
+${analysisInstructions}
 Use this full understanding of the demo flow to inform every field in your response — especially the description, product suggestions, and SEO keywords.
 
 Return ONLY valid JSON that can be parsed by JSON.parse().
@@ -896,6 +992,7 @@ The response must be a single JSON object with exactly these fields:
   "sales_tactic_suggestion": "",
   "marketing_program_suggestion": "",
   "group_suggestion": "",
+  "youtube_series_suggestion": "",
   "tour_highlights": [],
   "field_confidence": {},
   "confidence_notes": [],
@@ -918,7 +1015,7 @@ description_without_gid — the opening paragraph (high-level "what and why"):
 tour_highlights — the bullet list (specific "how"):
 - 3 to 6 bullets listing every key step, tool, and action the demo shows.
 - Each bullet: sentence fragment starting with a verb or "How to..." phrasing.
-- Be specific: name UI elements, dashboard panels, commands, config values, metrics, and tools visible in the screenshots.
+- ${isYouTube ? 'For YouTube videos, base bullets on title/description talking points (no screenshots). Keep bullets concrete but do not invent UI click paths.' : 'Be specific: name UI elements, dashboard panels, commands, config values, metrics, and tools visible in the screenshots.'}
 - Order bullets to follow the demo flow from start to finish.
 - Bad: "Shows the product dashboard" — too vague.
 - Good: "Tracking per-pod cache hit rates, token throughput, and latency in Grafana" — specific.
@@ -943,7 +1040,9 @@ SEO rules:
 - Do not include competitor names unless the guide content clearly mentions them.
 
 Important field rules:
-- Do not decide content_type_suggestion. Return an empty string for content_type_suggestion. The creator must choose Content Type.
+${isVideoPath
+  ? '- For content_type_suggestion on video paths, choose only from the allowed Content Type options.\n  * "Business Intro" = high-level overview / introducing / what\'s new / things to know / value framing. Often ~2–5 minutes; NOT limited to under 90 seconds.\n  * "Technical Walkthrough" = how-to, configure, deploy, install, hands-on demo, step-by-step.\n  * Prefer title/intent over duration. Use "Other" only when neither fits.'
+  : '- Do not decide content_type_suggestion for interactive demos. Return an empty string for content_type_suggestion. The creator must choose Content Type.'}
 - Do not decide vertical_suggestion. Return an empty string for vertical_suggestion. The creator must choose the Vertical.
 - Do not decide event_or_project_suggestion. Return an empty string for event_or_project_suggestion. The creator must choose the Event or Project.
 - Do not make a group_suggestion. Return an empty string for group_suggestion. The creator must decide grouping manually.
@@ -953,8 +1052,8 @@ Important field rules:
 - For other_products_suggestion, choose zero or more values only from the allowed Product options.
 - If the guide references a product not in the allowed list, include "Other" in other_products_suggestion AND set other_products_other_text to the actual product name(s) (e.g., "Veeam Kasten, Portworx"). If "Other" is selected but you cannot identify the product name, set other_products_other_text to "" and include "other_products_suggestion" in fields_needing_creator_confirmation.
 ${isYouTube
-  ? '- Do NOT generate primary_topic_suggestion or other_topics_suggestion for YouTube videos. Return empty string and empty array respectively. Topics are only used for interactive demos.'
-  : '- For primary_topic_suggestion, choose only from the allowed Topic options.\n- For other_topics_suggestion, choose zero or more values only from the allowed Topic options.'}
+  ? '- Do NOT generate primary_topic_suggestion or other_topics_suggestion for YouTube videos. Return empty string and empty array respectively. Topics are only used for interactive demos.\n- For youtube_series_suggestion, choose only from the allowed YouTube Series options.\n  * Use a named series (VLM, Demo Deep Dive, In the Clouds) only with clear evidence.\n  * Use "Other (series not in list)" when it is clearly part of a show/series that is not in the allowed list (include the show name in confidence_notes).\n  * Use "None / Not part of a series" only when it appears to be a standalone video with no series signals.'
+  : '- For primary_topic_suggestion, choose only from the allowed Topic options.\n- For other_topics_suggestion, choose zero or more values only from the allowed Topic options.\n- For youtube_series_suggestion, return an empty string.'}
 - For tdp_suggestion, choose only from the allowed Technology Decision Point options.
 - For sales_tactic_suggestion, choose only from the allowed Sales Tactic options.
 - For marketing_program_suggestion, choose only from the allowed Marketing Program options.
@@ -970,18 +1069,18 @@ ${isYouTube
 
 field_confidence rules:
 - Return a "field_confidence" object where each key is a field name and the value is "high", "medium", or "low".
-- Include confidence for: demo_title, description_without_gid, description_for_seo, language_suggestions, seo_keywords, primary_product_suggestion, other_products_suggestion, ${isYouTube ? '' : 'primary_topic_suggestion, other_topics_suggestion, '}tdp_suggestion, sales_tactic_suggestion, marketing_program_suggestion, cta_link_suggestions, tour_highlights.
+- Include confidence for: demo_title, description_without_gid, description_for_seo, language_suggestions, seo_keywords, primary_product_suggestion, other_products_suggestion, ${isVideoPath ? 'content_type_suggestion, ' : 'primary_topic_suggestion, other_topics_suggestion, '}${isYouTube ? 'youtube_series_suggestion, ' : ''}tdp_suggestion, sales_tactic_suggestion, marketing_program_suggestion, cta_link_suggestions, tour_highlights.
 - "high" = strong direct evidence from guide text and screenshots.
 - "medium" = reasonable inference but some assumptions were made.
 - "low" = weak or no evidence, best guess or taxonomy fallback used.
-- Do not include confidence for content_type_suggestion, group_suggestion, vertical_suggestion, or event_or_project_suggestion.
+- Do not include confidence for group_suggestion, vertical_suggestion, or event_or_project_suggestion${isVideoPath ? '' : ', or content_type_suggestion'}.
 - If a field uses a fallback value like "N/A" or "No", its confidence should be "low" unless the guide clearly supports that answer.
 
 AI generation details rules:
 * confidence_notes will be shown in the "How this draft was generated" section.
 * Include 4 to 6 short notes.
 * The FIRST note must be a brief demo flow summary: describe the full journey the demo takes the user through, from beginning to end, in one sentence. For example: "Demo walks through installing the Ansible VS Code extension, enabling Lightspeed, connecting a Red Hat account, activating a 90-day trial, and generating a playbook."
-* The SECOND note should mention what was visually identified from the screenshots that text alone would not reveal (e.g., product branding, UI layout, specific dialog screens, navigation paths).
+* The SECOND note should mention what was visually identified from the screenshots that text alone would not reveal (e.g., product branding, UI layout, specific dialog screens, navigation paths).${isYouTube ? ' For YouTube videos with no screenshots, say that analysis used title/description text only.' : ''}
 * Remaining notes: focus on how the guide content was interpreted.
 * Mention the main content signal, such as setup flow, migration flow, backup workflow, trial activation, or product overview.
 * Mention any important assumptions made from the guide title, step text, or repeated product terms.
@@ -1038,6 +1137,9 @@ ${toOptionList(FIELD_OPTIONS.salesTactics)}
 
 Allowed Marketing Program options:
 ${toOptionList(FIELD_OPTIONS.marketingPrograms)}
+
+Allowed YouTube Series options:
+${toOptionList(FIELD_OPTIONS.youtubeSeries)}
 
 Guide URL:
 ${extractedGuide.guideUrl}
@@ -1189,7 +1291,7 @@ function normalizeCtaSuggestions_(draft) {
 function normalizeDraft(draft) {
   return {
     demo_title: draft.demo_title || '',
-    content_type_suggestion: '',
+    content_type_suggestion: draft.content_type_suggestion || '',
     description_without_gid: draft.description_without_gid || draft.description_with_gid || '',
     description_for_seo: draft.description_for_seo || '',
     language_suggestions: normalizeStringArray(draft.language_suggestions || draft.language_suggestion),
@@ -1206,6 +1308,7 @@ cta_link_suggestions: normalizeCtaSuggestions_(draft),
     sales_tactic_suggestion: draft.sales_tactic_suggestion || '',
     marketing_program_suggestion: draft.marketing_program_suggestion || '',
     group_suggestion: '',
+    youtube_series_suggestion: draft.youtube_series_suggestion || '',
     tour_highlights: normalizeStringArray(draft.tour_highlights),
     field_confidence: draft.field_confidence && typeof draft.field_confidence === 'object'
       ? draft.field_confidence
