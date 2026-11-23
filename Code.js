@@ -53,6 +53,22 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
+/**
+ * Evaluate and render GlobalHeader template with navigation context.
+ * GlobalHeader.html contains Apps Script scriptlets that must be evaluated.
+ * @param {string} hubBaseUrl - Hub discovery URL (DEV or Production)
+ * @param {string} webAppBaseUrl - Current web app base URL
+ * @param {string} currentPage - Current page identifier ('status' or 'intake')
+ * @return {string} Evaluated HTML content with scriptlets rendered
+ */
+function includeGlobalHeader(hubBaseUrl, webAppBaseUrl, currentPage) {
+  const template = HtmlService.createTemplateFromFile('GlobalHeader');
+  template.hubBaseUrl = hubBaseUrl;
+  template.webAppBaseUrl = webAppBaseUrl;
+  template.currentPage = currentPage;
+  return template.evaluate().getContent();
+}
+
 function getUserEmail() {
   try {
     const email = Session.getActiveUser().getEmail();
