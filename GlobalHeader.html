@@ -3,13 +3,13 @@
   <div class="headerContainer">
     <!-- Left: Branding -->
     <div class="headerBrand">
-      <a href="#" onclick="goHome(event)" class="brandLink" title="Return to Hub home">
+      <div class="brandLink">
         <img src="https://coolstuff.redhat.com/assets/stores/REDHAT/branding/site-logo.png" alt="Red Hat" class="brandLogo">
         <div class="brandText">
           <span class="brandDivider">/</span>
           <span class="brandTitle">The Interact Hub</span>
         </div>
-      </a>
+      </div>
     </div>
 
     <!-- Mobile Menu Toggle -->
@@ -23,6 +23,16 @@
 
     <!-- Right: Navigation -->
     <nav class="headerNav" id="headerNav">
+      <!-- Explore Demos Link -->
+      <a href="<?= hubBaseUrl ?>" class="navButton navLink">
+        Explore Demos
+      </a>
+
+      <!-- Status Tracker Link -->
+      <a href="<?= webAppBaseUrl ?>?page=status" class="navButton navLink" <? if (currentPage === 'status') { ?>aria-current="page"<? } ?>>
+        Status Tracker
+      </a>
+
       <!-- Create & Submit Dropdown -->
       <div class="navItem navDropdown">
         <button class="navButton" id="createDropdownBtn" aria-haspopup="true" aria-expanded="false" onclick="toggleDropdown('createDropdown')">
@@ -37,9 +47,6 @@
           </a>
           <a href="#" onclick="globalHeaderNavigateToIntake(event)" class="navDropdownItem" role="menuitem">
             Submit a Demo for Review
-          </a>
-          <a href="#" onclick="globalHeaderNavigateToTracker(event)" class="navDropdownItem" role="menuitem">
-            Check My Submissions
           </a>
         </div>
       </div>
