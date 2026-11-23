@@ -103,6 +103,22 @@ function testCheckMySubmissionsAbsent() {
   console.log('  ✓ Check My Submissions is absent from dropdown\n');
 }
 
+function testCreateSubmitActiveState() {
+  console.log('Test: Create & Submit has active state when currentPage === intake');
+
+  // Should have conditional active class on Create & Submit button
+  const activeClassPattern = /<button class="navButton<\? if \(currentPage === 'intake'\) \{ \?> navButton-active<\? } \?>"/;
+  assert.ok(activeClassPattern.test(headerHtml),
+    'Create & Submit button should have conditional navButton-active class when currentPage === intake');
+
+  // Should have conditional aria-current attribute (appears before closing >)
+  const ariaCurrentPattern = /onclick="toggleDropdown\('createDropdown'\)"<\? if \(currentPage === 'intake'\) \{ \?> aria-current="page"<\? } \?>>/;
+  assert.ok(ariaCurrentPattern.test(headerHtml),
+    'Create & Submit button should have conditional aria-current="page" when currentPage === intake');
+
+  console.log('  ✓ Create & Submit has active state for intake page\n');
+}
+
 // Run all tests
 try {
   testExploreDemosNavigation();
@@ -111,6 +127,7 @@ try {
   testCurrentPageDetection();
   testBrandingNonClickable();
   testCheckMySubmissionsAbsent();
+  testCreateSubmitActiveState();
 
   console.log('✅ All Global Header integration tests passed');
 } catch (error) {

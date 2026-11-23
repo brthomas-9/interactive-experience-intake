@@ -418,19 +418,23 @@
 
   <div class="contentWrapper">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
-    <div>
-      <h1>Interactive Experience Intake</h1>
-      <p class="subtle" style="margin-bottom:0;">Paste your Arcade demo or video URL below. AI will pre-fill most fields — you just review and submit.</p>
-    </div>
-    <div style="display:flex; gap:18px; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <h1 style="margin:0;">Interactive Experience Intake</h1>
       <a href="https://github.com/rubyyyyang/interactive-experience-intake/blob/main/docs/user-guide.md" target="_blank"
-         style="color: #5f6368; font-size: 0.82rem; text-decoration: none; white-space:nowrap;"
-         onmouseover="this.style.color='#6d28d9'" onmouseout="this.style.color='#5f6368'">User Guide</a>
-      <a href="#" onclick="navigateToStatus(); return false;"
-         style="color: #FFFFFF; background: #6D28D9; font-size: 0.85rem; text-decoration: none; padding: 6px 14px; border: 1px solid transparent; border-radius: 6px; transition: background 0.15s; white-space:nowrap;"
-         onmouseover="this.style.background='#5B21B6'" onmouseout="this.style.background='#6D28D9'">Status Tracker</a>
+         style="color: #5f6368; font-size: 0.85rem; text-decoration: none; white-space:nowrap; display:flex; align-items:center; gap:4px;"
+         onmouseover="this.style.color='#6d28d9'" onmouseout="this.style.color='#5f6368'">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.8;">
+          <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75V1.75zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574zM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25z"/>
+        </svg>
+        User Guide
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.6;">
+          <path d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72z"/>
+          <path d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5z"/>
+        </svg>
+      </a>
     </div>
   </div>
+  <p class="subtle" style="margin-top:0; margin-bottom:20px;">Paste your Arcade demo or video URL below. AI will pre-fill most fields — you just review and submit.</p>
 
 <div class="card" style="border-left:4px solid #b45309; background:#fff7ed;">
   <strong>Pilot mode</strong> — please don't enter sensitive or confidential information.
