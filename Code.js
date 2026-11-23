@@ -18,11 +18,13 @@ function doGet(e) {
   const hubBaseUrl = isDev
     ? 'https://script.google.com/a/macros/redhat.com/s/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/dev'
     : 'https://script.google.com/a/macros/redhat.com/s/AKfycbw-i5dNh9DOHOyGuo9-pbfrQCazwImd48wfxTDD8wecsg4tk5h6yXGy25OJFx1F5COgsw/exec';
+  const currentPage = (page === 'status') ? 'status' : 'intake';
 
   if (page === 'status') {
     const template = HtmlService.createTemplateFromFile('StatusTracker');
     template.webAppBaseUrl = baseUrl;
     template.hubBaseUrl = hubBaseUrl;
+    template.currentPage = currentPage;
     template.token = (e && e.parameter && e.parameter.token) || '';
     return template.evaluate()
       .setTitle('Interactive Experience Status Tracker')
@@ -34,6 +36,7 @@ function doGet(e) {
   const template = HtmlService.createTemplateFromFile('Index');
   template.webAppBaseUrl = baseUrl;
   template.hubBaseUrl = hubBaseUrl;
+  template.currentPage = currentPage;
   return template.evaluate()
     .setTitle('Interactive Experience Intake')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -48,6 +51,22 @@ function doGet(e) {
  */
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+/**
+ * Evaluate and render GlobalHeader template with navigation context.
+ * GlobalHeader.html contains Apps Script scriptlets that must be evaluated.
+ * @param {string} hubBaseUrl - Hub discovery URL (DEV or Production)
+ * @param {string} webAppBaseUrl - Current web app base URL
+ * @param {string} currentPage - Current page identifier ('status' or 'intake')
+ * @return {string} Evaluated HTML content with scriptlets rendered
+ */
+function includeGlobalHeader(hubBaseUrl, webAppBaseUrl, currentPage) {
+  const template = HtmlService.createTemplateFromFile('GlobalHeader');
+  template.hubBaseUrl = hubBaseUrl;
+  template.webAppBaseUrl = webAppBaseUrl;
+  template.currentPage = currentPage;
+  return template.evaluate().getContent();
 }
 
 function getUserEmail() {

@@ -88,9 +88,9 @@ function testHtmlTemplateVariables() {
 function testNavigationFunctionsUseHubBaseUrl() {
   console.log('Test: Navigation functions use hubBaseUrl');
 
-  // goHome should use hubBaseUrl (not hardcoded URL)
-  assert.ok(/function goHome[\s\S]{0,200}hubBaseUrl/.test(headerJS),
-    'goHome should use hubBaseUrl variable');
+  // goHome function no longer exists (branding is static)
+  assert.ok(!/function goHome/.test(headerJS),
+    'goHome function should not exist (branding is static)');
   assert.ok(!/AKfycbxvHiD1Xab3gsf0pYA-k5ZejnRyabPupv6gULcY4m21/.test(headerJS),
     'Should not contain hardcoded old Hub DEV URL');
 

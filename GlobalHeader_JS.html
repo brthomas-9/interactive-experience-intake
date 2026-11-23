@@ -4,12 +4,6 @@
       var webAppBaseUrl; // Set by each page
       var hubBaseUrl; // Set by doGet() - DEV or Production
 
-      function goHome(event) {
-        event.preventDefault();
-        // Apps Script iframe sandbox - use top-level navigation
-        window.top.location.href = hubBaseUrl;
-      }
-
       function globalHeaderNavigateToIntake(event) {
         event.preventDefault();
         window.top.location.href = webAppBaseUrl;

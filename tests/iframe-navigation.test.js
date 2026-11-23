@@ -15,9 +15,8 @@ const headerJS = fs.readFileSync(path.join(repoRoot, 'GlobalHeader_JS.html'), 'u
 function testTopLevelNavigation() {
   console.log('Test: Navigation functions use window.top.location.href');
 
-  // All navigation functions should use window.top.location.href for iframe sandbox
+  // Navigation functions that still exist (goHome removed, branding is static)
   const navigationFunctions = [
-    'goHome',
     'globalHeaderNavigateToIntake',
     'globalHeaderNavigateToTracker',
     'globalHeaderNavigateToSavedDemos'
@@ -46,9 +45,8 @@ function testTopLevelNavigation() {
 function testEventHandlingPreserved() {
   console.log('Test: Event handling preserved');
 
-  // Functions with event parameters should call preventDefault
+  // Functions with event parameters should call preventDefault (goHome removed)
   const eventFunctions = [
-    'goHome',
     'globalHeaderNavigateToIntake',
     'globalHeaderNavigateToTracker'
   ];

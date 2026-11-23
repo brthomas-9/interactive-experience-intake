@@ -29,10 +29,7 @@
         gap: 12px;
         text-decoration: none;
         color: var(--ink);
-      }
-
-      .brandLink:hover .brandTitle {
-        color: var(--accent);
+        cursor: default;
       }
 
       .brandLogo {
@@ -97,6 +94,17 @@
 
       .navLink {
         text-decoration: none;
+      }
+
+      .navLink[aria-current="page"] {
+        background: var(--border);
+        font-weight: 600;
+      }
+
+      .navButton-active,
+      .navButton[aria-current="page"] {
+        background: var(--border);
+        font-weight: 600;
       }
 
       .navChevron {

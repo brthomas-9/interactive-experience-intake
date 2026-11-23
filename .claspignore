@@ -9,3 +9,6 @@ CLAUDE.md
 .claude/**
 tests/**
 playwright-report/**
+.deployed-head-backup/**
+.deployment-verification/**
+.verify-*/**

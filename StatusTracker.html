@@ -1139,13 +1139,12 @@
 </head>
 <body>
 
-<?!= include("GlobalHeader") ?>
+<?!= includeGlobalHeader(hubBaseUrl, webAppBaseUrl, currentPage) ?>
 
 <div style="max-width:1400px; margin:0 auto; padding:32px 24px 0 24px;">
 
 <div class="header">
   <h1 id="pageTitle">Interactive Experience Status Tracker</h1>
-  <a href="#" onclick="navigateToIntake(); return false;" style="color: #FFFFFF; background: #6D28D9; font-size: 0.85rem; text-decoration: none; padding: 6px 14px; border: 1px solid transparent; border-radius: 6px; transition: background 0.15s; white-space:nowrap;" onmouseover="this.style.background='#5B21B6'" onmouseout="this.style.background='#6D28D9'">Submit new</a>
 </div>
 
 <div id="mainView">
@@ -1284,10 +1283,6 @@
 
     // Normal date display
     return formatDate(getDisplayDate(sub));
-  }
-
-  function navigateToIntake() {
-    window.top.location.href = webAppBaseUrl;
   }
 
   function escapeHtml(str) {
