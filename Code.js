@@ -1326,3 +1326,33 @@ function ytGetQuarter_(dateStr) {
   if (parts.length < 2) return '';
   return 'CY' + parts[0].slice(2) + 'Q' + Math.ceil(parseInt(parts[1]) / 3);
 }
+
+/**
+ * One-shot: make the owned Video Demo form openable for Red Hat demo viewers.
+ * Run via: clasp run shareOwnedVideoDemoFormForDemo
+ */
+function shareOwnedVideoDemoFormForDemo() {
+  var fileId = '17wFoX95UE7FIHABB85D16nQXe_tp71gPlXolicRsbRc';
+  var file = DriveApp.getFileById(fileId);
+  var sharingMode = '';
+  try {
+    file.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.VIEW);
+    sharingMode = 'DOMAIN_WITH_LINK';
+  } catch (domainErr) {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    sharingMode = 'ANYONE_WITH_LINK';
+  }
+
+  var form = FormApp.openById(fileId);
+  form.setAcceptingResponses(true);
+  // Allow opening the published form without an extra Drive ACL dance.
+  try { form.setAllowResponseEdits(false); } catch (e) {}
+  try { form.setRequireLogin(true); } catch (e) {}
+
+  return {
+    sharingMode: sharingMode,
+    publishedUrl: form.getPublishedUrl(),
+    editUrl: form.getEditUrl(),
+    responderUrl: VIDEO_DEMO_GOOGLE_FORM_URL
+  };
+}

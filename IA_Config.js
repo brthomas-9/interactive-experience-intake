@@ -41,13 +41,13 @@ const VIDEO_DEMO_GOOGLE_FORM_URL =
  */
 const VIDEO_DEMO_GOOGLE_FORM_ENTRIES_ = {
   // Stand-alone path (Creation Link / Final Demo Title) — preferred for Arcade AI / Drive / MP4
-  creationLink: '',
-  titleStandAlone: '',
+  creationLink: '890796641',
+  titleStandAlone: '1420019727',
   // Global-ID path Video Link / title (fallback)
-  videoLink: '',
-  titleWithGid: '',
-  // Content host type (added on owned form)
-  contentHostType: ''
+  videoLink: '1972358065',
+  titleWithGid: '1591891617',
+  // Content host type on stand-alone section
+  contentHostType: '877661142'
 };
 
 /**
